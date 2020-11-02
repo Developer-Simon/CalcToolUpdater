@@ -1,11 +1,11 @@
 {
-  "name": "electron-updater-example",
-  "version": "0.7.1",
+  "name": "CalculationToolClient",
+  "version": "1.1.1",
   "main": "main.js",
-  "description": "electron-updater example project",
-  "author": "Matt Haggard",
+  "description": "Program to install and update MS-Excel CalculationTool",
+  "author": "Developer-Simon",
   "scripts": {
-    "publish": "build -p always"
+    "publish": "build --win -p always"
   },
   "devDependencies": {
     "electron": "^3.0.2",
@@ -16,9 +16,16 @@
     "electron-updater": "^4.0.6"
   },
   "build": {
-    "appId": "com.github.iffy.electronupdaterexample",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Developer-Simon",
+        "repo": "CalcToolUpdater"
+      }
+    ],
+    "appId": "com.github.DevSimon.CalcToolUpdater",
     "mac": {
-      "category": "your.app.category.type",
+      "category": "excel.tools",
       "target": [
         "zip",
         "dmg"
