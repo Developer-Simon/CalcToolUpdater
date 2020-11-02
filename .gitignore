@@ -3,3 +3,4 @@ dist/
 yarn.lock
 electron-quick-start
 publish.ps1
+files

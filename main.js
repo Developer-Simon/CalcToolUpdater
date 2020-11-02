@@ -1,7 +1,7 @@
 // This is free and unencumbered software released into the public domain.
 // See LICENSE for details
 
-const {app, BrowserWindow, Menu, protocol, ipcMain} = require('electron');
+const {app, BrowserWindow, Menu, protocol, ipcMain, MenuItem, shell, dialog} = require('electron');
 const log = require('electron-log');
 const {autoUpdater} = require("electron-updater");
 
@@ -59,8 +59,8 @@ function sendStatusToWindow(text) {
   win.webContents.send('message', text);
 }
 function createDefaultWindow() {
-  win = new BrowserWindow();
-  win.webContents.openDevTools();
+  win = new BrowserWindow({ width: 400, height: 320});
+  //win.webContents.openDevTools();
   win.on('closed', () => {
     win = null;
   });
@@ -92,6 +92,7 @@ app.on('ready', function() {
   // Create the Menu
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
+  menu.append(MenuItem())
 
   createDefaultWindow();
 });

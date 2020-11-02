@@ -1,5 +1,6 @@
+  
 {
-  "name": "CalculationToolClient",
+  "name": "CalcToolClient",
   "version": "1.1.1",
   "main": "main.js",
   "description": "Program to install and update MS-Excel CalculationTool",
@@ -23,6 +24,9 @@
         "repo": "CalcToolUpdater"
       }
     ],
+	"extraFiles": [
+		"files/**/*"
+	],
     "appId": "com.github.DevSimon.CalcToolUpdater",
     "mac": {
       "category": "excel.tools",
