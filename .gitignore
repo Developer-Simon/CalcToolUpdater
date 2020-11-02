@@ -1,0 +1,4 @@
+node_modules
+dist/
+yarn.lock
+electron-quick-start
