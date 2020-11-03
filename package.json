@@ -6,7 +6,8 @@
   "description": "Program to install and update MS-Excel CalculationTool",
   "author": "Developer-Simon",
   "scripts": {
-    "publish": "build --win -p always"
+    "publish": "build --win -p always",
+    "build": "build --win"
   },
   "devDependencies": {
     "electron": "^3.0.2",

@@ -92,7 +92,6 @@ app.on('ready', function() {
   // Create the Menu
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
-  menu.append(MenuItem())
 
   createDefaultWindow();
 });
