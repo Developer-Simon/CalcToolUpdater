@@ -1,17 +1,9 @@
-// This is free and unencumbered software released into the public domain.
-// See LICENSE for details
-
-const {app, BrowserWindow, Menu, protocol, ipcMain, MenuItem, shell, dialog} = require('electron');
+const {app, BrowserWindow, Menu, protocol, ipcMain, MenuItem, shell, dialog, webContents} = require('electron');
 const log = require('electron-log');
 const {autoUpdater} = require("electron-updater");
 
 //-------------------------------------------------------------------
 // Logging
-//
-// THIS SECTION IS NOT REQUIRED
-//
-// This logging setup is not required for auto-updates to work,
-// but it sure makes debugging easier :)
 //-------------------------------------------------------------------
 autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = 'info';
@@ -19,15 +11,31 @@ log.info('App starting...');
 
 //-------------------------------------------------------------------
 // Define the menu
-//
-// THIS SECTION IS NOT REQUIRED
 //-------------------------------------------------------------------
 let template = []
 if (process.platform === 'darwin') {
   // OS X
   const name = app.getName();
   template.unshift({
-    label: name,
+    label: 'Menu',
+    submenu: [
+      {
+        label: 'About ' + name,
+        click() { sendStatusToWindow('You clicked about :)')}
+      },
+      {
+        label: 'Quit',
+        accelerator: 'Command+Q',
+        click() { app.quit(); }
+      },
+    ]
+  })
+}
+else if (process.platform == 'win32') {
+  // windows
+  const name = app.getName();
+  template.unshift({
+    label: 'Menu',
     submenu: [
       {
         label: 'About ' + name,
@@ -35,7 +43,7 @@ if (process.platform === 'darwin') {
       },
       {
         label: 'Quit',
-        accelerator: 'Command+Q',
+        accelerator: "Command+Q",
         click() { app.quit(); }
       },
     ]
@@ -59,12 +67,13 @@ function sendStatusToWindow(text) {
   win.webContents.send('message', text);
 }
 function createDefaultWindow() {
-  win = new BrowserWindow({ width: 400, height: 320});
-  //win.webContents.openDevTools();
+  //win = new BrowserWindow({ width: 400, height: 320});
+  win = new BrowserWindow({ width: 1200, height: 1000});
+  win.webContents.openDevTools();
   win.on('closed', () => {
     win = null;
   });
-  win.loadURL(`file://${__dirname}/version.html#v${app.getVersion()}`);
+  win.loadURL(`file://${__dirname}/index.html#v${app.getVersion()}`);
   return win;
 }
 autoUpdater.on('checking-for-update', () => {
@@ -88,55 +97,65 @@ autoUpdater.on('download-progress', (progressObj) => {
 autoUpdater.on('update-downloaded', (info) => {
   sendStatusToWindow('Update downloaded');
 });
+
+//-------------------------------------------------------------------
+// Program execution (main)
+//-------------------------------------------------------------------
 app.on('ready', function() {
   // Create the Menu
-  //const menu = Menu.buildFromTemplate(template);
-  //Menu.setApplicationMenu(menu);
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
 
   createDefaultWindow();
+
+  autoUpdater.autoDownload = false;
+  autoUpdater.allowPrerelease = true;
+  autoUpdater.checkForUpdates();
 });
+
 app.on('window-all-closed', () => {
   app.quit();
 });
 
-//
-// CHOOSE one of the following options for Auto updates
-//
+//-------------------------------------------------------------------
+// ipc events
+//-------------------------------------------------------------------
+ipcMain.on('btnclick', function(event, arg) {
+  var installerProcess = require('child_process').execFile;
+  var executablePath = app.getAppPath();
+  var resPos = executablePath.search("resources");
+  executablePath = executablePath.slice(0, resPos);
+  executablePath = executablePath + "files\\CalcToolInstaller_V1.1.0.1.EXE"
+  sendStatusToWindow(executablePath);
+  installerProcess(executablePath, function(err, data) {
+    if(err) {
+      sendStatusToWindow("Error occured: " + err);
+      return;
+    }
+ 
+    sendStatusToWindow(data.toString());
+  });
+})
 
 //-------------------------------------------------------------------
-// Auto updates - Option 1 - Simplest version
-//
-// This will immediately download an update, then install when the
-// app quits.
+// Auto updates 
 //-------------------------------------------------------------------
+/*
 app.on('ready', function()  {
-  autoUpdater.checkForUpdatesAndNotify();
+  autoUpdater.autoDownload = false;
+  autoUpdater.allowPrerelease = true;
+  autoUpdater.checkForUpdates();
 });
-
-//-------------------------------------------------------------------
-// Auto updates - Option 2 - More control
-//
-// For details about these events, see the Wiki:
-// https://github.com/electron-userland/electron-builder/wiki/Auto-Update#events
-//
-// The app doesn't need to listen to any events except `update-downloaded`
-//
-// Uncomment any of the below events to listen for them.  Also,
-// look in the previous section to see them being used.
-//-------------------------------------------------------------------
-// app.on('ready', function()  {
-//   autoUpdater.checkForUpdates();
-// });
-// autoUpdater.on('checking-for-update', () => {
-// })
-// autoUpdater.on('update-available', (info) => {
-// })
-// autoUpdater.on('update-not-available', (info) => {
-// })
-// autoUpdater.on('error', (err) => {
-// })
-// autoUpdater.on('download-progress', (progressObj) => {
-// })
-// autoUpdater.on('update-downloaded', (info) => {
-//   autoUpdater.quitAndInstall();  
-// })
+*/
+autoUpdater.on('checking-for-update', () => {
+})
+autoUpdater.on('update-available', (info) => {
+})
+autoUpdater.on('update-not-available', (info) => {
+})
+autoUpdater.on('error', (err) => {
+})
+autoUpdater.on('download-progress', (progressObj) => {
+})
+autoUpdater.on('update-downloaded', (info) => {
+})

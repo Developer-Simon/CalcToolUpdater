@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,300' rel='stylesheet' type='text/css'>
+	<title>CalculationTool Update-Client</title>
+</head>
+<body>
+  <main class="content-wraper" id="content-wraper">
+    <div class="content-blk">
+      Current version: <span id="version_label">VX.Y.Z</span>
+      
+      <button id="LoadNewWindow">Click :)</button>
+    </div>
+    <div id="message-viewer"></div>
+  </main>
+
+  <!-- Insert this line above script imports  -->
+  <script>
+    if (typeof module === 'object') {
+      window.module = module; 
+      module = undefined;
+    }
+  </script>
+
+  <!-- normal script imports etc... -->
+  <script>
+    // Display the current version
+    let version = window.location.hash.substring(1);
+    document.getElementById('version_label').innerText = version;
+  </script>
+
+  <!-- Insert this line after script imports -->
+  <script>
+    if (window.module) {
+      module = window.module;
+    }
+  </script>
+
+  <!-- Electron Scripts -->
+  <script type="text/javascript">
+    // Create ipcRenderer
+    const { ipcRenderer } = require('electron');
+
+    // Create button event
+    const btnclick = document.getElementById('LoadNewWindow');
+    btnclick.addEventListener('click', function() {
+      var arg = "secondParam";
+      ipcRenderer.send("btnclick", arg);
+    })
+
+    // Create update listener
+    ipcRenderer.on('message', function(event, text) {
+      var container = document.getElementById('message-viewer');
+      var message = document.createElement('div');
+      message.innerHTML = text;
+      container.appendChild(message);
+    })
+  </script>
+</body>
+</html>
