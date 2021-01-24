@@ -9,10 +9,17 @@
 <body>
   <main class="content-wraper" id="content-wraper">
     <div class="content-blk">
-      Current version: <span id="version_label">VX.Y.Z</span>
-      
-      <button id="LoadNewWindow">Click :)</button>
+      Aktuelle Version:
+      <br>
+      <button id="StartInstallButton">
+        <span id="version_label">VX.Y.Z</span> installieren
+      </button>
+      <!-- <button id="DebugButton">Debugg-action</button> -->
+      <br><br>
+
     </div>
+    <div id="flex-update-download"></div>
+    <div id="update-status"></div>
     <div id="message-viewer"></div>
   </main>
 
@@ -44,11 +51,17 @@
     const { ipcRenderer } = require('electron');
 
     // Create button event
-    const btnclick = document.getElementById('LoadNewWindow');
-    btnclick.addEventListener('click', function() {
+    const installButton = document.getElementById('StartInstallButton');
+    installButton.addEventListener('click', function() {
       var arg = "secondParam";
-      ipcRenderer.send("btnclick", arg);
+      ipcRenderer.send("installButton", arg);
     })
+    /*
+    const debugbtnclick = document.getElementById('DebugButton');
+    debugbtnclick.addEventListener('click', function() {
+      ipcRenderer.send("debugbtnclick");
+    })
+    */
 
     // Create update listener
     ipcRenderer.on('message', function(event, text) {
@@ -56,6 +69,28 @@
       var message = document.createElement('div');
       message.innerHTML = text;
       container.appendChild(message);
+    })
+
+    // create update status listener
+    ipcRenderer.on('update-status', function(event, text) {
+      var message = document.getElementById('update-status');
+      message.innerHTML = text;
+    })
+
+    // Create update button
+    ipcRenderer.on('add-update-button', function(event, text) {
+      var container = document.getElementById('flex-update-download');
+      var label = document.createElement('div');
+      var action = document.createElement('button');
+      action.innerHTML = text;
+      action.id = 'UpdateDownloadButton';
+      label.innerText = 'Neue Version verfügbar: ';
+      container.appendChild(label);
+      container.appendChild(action);
+      const updatebtnclick = document.getElementById('UpdateDownloadButton');
+      updatebtnclick.addEventListener('click', function() {
+        ipcRenderer.send("downloadUpdate");
+      })
     })
   </script>
 </body>

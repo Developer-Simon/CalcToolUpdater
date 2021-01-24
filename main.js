@@ -1,5 +1,6 @@
 const {app, BrowserWindow, Menu, protocol, ipcMain, MenuItem, shell, dialog, webContents} = require('electron');
 const log = require('electron-log');
+const Store = require('electron-store');
 const {autoUpdater} = require("electron-updater");
 
 //-------------------------------------------------------------------
@@ -8,6 +9,10 @@ const {autoUpdater} = require("electron-updater");
 autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = 'info';
 log.info('App starting...');
+const store = new Store({
+  name: 'storage',
+  clearInvalidConfig: false
+});
 
 //-------------------------------------------------------------------
 // Define the menu
@@ -66,10 +71,30 @@ function sendStatusToWindow(text) {
   log.info(text);
   win.webContents.send('message', text);
 }
+function createButtonAtWindow(text) {
+  win.webContents.send('add-update-button', text);
+}
+function sendUpdateStatus(text) {
+  win.webContents.send('update-status', text);
+}
+function startInstaller(fileName) {
+  var installerProcess = require('child_process').execFile;
+  var executablePath = app.getAppPath();
+  var resPos = executablePath.search("resources");
+  executablePath = executablePath.slice(0, resPos);
+  executablePath = executablePath + "files\\" + fileName;
+  installerProcess(executablePath, function(err, data) {
+    if(err) {
+      sendStatusToWindow("Error occured: " + err);
+      return;
+    }
+  });
+}
+
 function createDefaultWindow() {
-  //win = new BrowserWindow({ width: 400, height: 320});
-  win = new BrowserWindow({ width: 1200, height: 1000});
-  win.webContents.openDevTools();
+  win = new BrowserWindow({ width: 400, height: 320});
+  //win = new BrowserWindow({ width: 1200, height: 1000});
+  //win.webContents.openDevTools();
   win.on('closed', () => {
     win = null;
   });
@@ -77,29 +102,31 @@ function createDefaultWindow() {
   return win;
 }
 autoUpdater.on('checking-for-update', () => {
-  sendStatusToWindow('Checking for update...');
+  sendUpdateStatus('Checking for update...');
 })
 autoUpdater.on('update-available', (info) => {
-  sendStatusToWindow('Update available.');
+  //sendStatusToWindow('Update available: ' + info.version);
 })
 autoUpdater.on('update-not-available', (info) => {
-  sendStatusToWindow('Update not available.');
+  //sendStatusToWindow('Update not available.');
 })
 autoUpdater.on('error', (err) => {
-  sendStatusToWindow('Error in auto-updater. ' + err);
+  sendUpdateStatus('Error in auto-updater. ' + err);
 })
 autoUpdater.on('download-progress', (progressObj) => {
-  let log_message = "Download speed: " + progressObj.bytesPerSecond;
-  log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
-  log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
-  sendStatusToWindow(log_message);
+  let log_message = "Download speed: " + Math.round(progressObj.bytesPerSecond / (1024 * 2) * 1000) / 1000 + ' KB/s';
+  log_message = log_message + ' - Downloaded ' + Math.round(progressObj.percent * 10) / 10 + '%';
+  log_message = log_message + ' (' + Math.round(progressObj.transferred / (1024 * 2) * 1000) / 1000 + ' KB/' + Math.round(progressObj.total / (1024 * 2) * 1000) / 1000 + ' KB)';
+  sendUpdateStatus(log_message);
 })
 autoUpdater.on('update-downloaded', (info) => {
-  sendStatusToWindow('Update downloaded');
+  sendUpdateStatus('Update downloaded. Application will be relaunched, soon!');
+  app.relaunch();
+  app.exit();
 });
 
 //-------------------------------------------------------------------
-// Program execution (main)
+// Windows creation
 //-------------------------------------------------------------------
 app.on('ready', function() {
   // Create the Menu
@@ -107,10 +134,10 @@ app.on('ready', function() {
   Menu.setApplicationMenu(menu);
 
   createDefaultWindow();
-
-  autoUpdater.autoDownload = false;
-  autoUpdater.allowPrerelease = true;
-  autoUpdater.checkForUpdates();
+  if (store.get('download-done') == 1) {
+    startInstaller(`CalcToolInstaller_V${app.getVersion()}.EXE`);
+    store.set('download-done', 0);
+  }
 });
 
 app.on('window-all-closed', () => {
@@ -120,36 +147,30 @@ app.on('window-all-closed', () => {
 //-------------------------------------------------------------------
 // ipc events
 //-------------------------------------------------------------------
-ipcMain.on('btnclick', function(event, arg) {
-  var installerProcess = require('child_process').execFile;
-  var executablePath = app.getAppPath();
-  var resPos = executablePath.search("resources");
-  executablePath = executablePath.slice(0, resPos);
-  executablePath = executablePath + "files\\CalcToolInstaller_V1.1.0.1.EXE"
-  sendStatusToWindow(executablePath);
-  installerProcess(executablePath, function(err, data) {
-    if(err) {
-      sendStatusToWindow("Error occured: " + err);
-      return;
-    }
- 
-    sendStatusToWindow(data.toString());
-  });
+ipcMain.on('installButton', function(event, arg) {
+  startInstaller(`CalcToolInstaller_V${app.getVersion()}.EXE`);
+})
+ipcMain.on('debugbtnclick', function(event, arg) {
+  sendStatusToWindow('download-done = ' + store.get('download-done'));
+  store.set('download-done', 1);
+  sendStatusToWindow('download-done = ' + store.get('download-done'));
+})
+ipcMain.on('downloadUpdate', function(event, arg) {
+  autoUpdater.downloadUpdate();
 })
 
 //-------------------------------------------------------------------
 // Auto updates 
 //-------------------------------------------------------------------
-/*
 app.on('ready', function()  {
   autoUpdater.autoDownload = false;
   autoUpdater.allowPrerelease = true;
   autoUpdater.checkForUpdates();
 });
-*/
 autoUpdater.on('checking-for-update', () => {
 })
 autoUpdater.on('update-available', (info) => {
+  createButtonAtWindow('v' + info.version + ' herunterladen');
 })
 autoUpdater.on('update-not-available', (info) => {
 })
@@ -158,4 +179,5 @@ autoUpdater.on('error', (err) => {
 autoUpdater.on('download-progress', (progressObj) => {
 })
 autoUpdater.on('update-downloaded', (info) => {
+  store.set('download-done', true);
 })
