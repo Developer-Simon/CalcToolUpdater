@@ -3,3 +3,4 @@ dist/
 publish.ps1
 files
 CalcToolClient.exe.lnk
+res/
