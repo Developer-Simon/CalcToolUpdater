@@ -275,16 +275,11 @@ function installCalcTool()
   // Delete CalculationTool.inf of V1.0.4.1
   if (fs.existsSync(path.join(sAddinPath, "\\CalculationTool.inf"))) fs.unlinkSync(path.join(sAddinPath, "\\CalculationTool.inf"));
 
-  // Rename old calcTool for saving Settings
-  if (fs.existsSync(sAddinPath + "CalculationTool_old.xlam")) fs.unlinkSync(sAddinPath + "CalculationTool_old.xlam");
-  if (fs.existsSync(sAddinPath + "CalculationTool.xlam")) {
-    fs.rename(sAddinPath + "CalculationTool.xlam", sAddinPath + "CalculationTool_old.xlam", function(err) {
-      if (err != null && err.code == 'EBUSY') {
-        dialog.showMessageBox(win, {
-          type: "warning",
-          title: "Datei wird von einer anderen Anwendung verwendet",
-          message: "Während Excel ausgeführt wird, kann das CalculationTool nicht aktualisiert werden. Beenden Sie Excel und starten die Installation erneut!"});
-      } else if (err != null) {
+  // Rename CalculationTool.xml for transferring old Settings
+  if (fs.existsSync(sAddinPath + "CalculationTool_old.xml")) fs.unlinkSync(sAddinPath + "CalculationTool_old.xml");
+  if (fs.existsSync(sAddinPath + "CalculationTool.xml")) {
+    fs.rename(sAddinPath + "CalculationTool.xml", sAddinPath + "CalculationTool_old.xml", function(err) {
+      if (err != null) {
         dialog.showMessageBox(win, {message: "Unerwarter Fehler: " + err.message});
       }
     });
@@ -293,7 +288,12 @@ function installCalcTool()
   // Copy files
   fs.readdirSync(g_sResFolder + "calctool-files\\").forEach(file => {
     fs.copyFile(g_sResFolder + "calctool-files\\" + file, sAddinPath + file, function(err) {
-      if (err != null) {
+      if (err != null && err.code == 'EBUSY') {
+        dialog.showMessageBox(win, {
+          type: "warning",
+          title: "Datei wird von einer anderen Anwendung verwendet",
+          message: "Während Excel ausgeführt wird, kann das CalculationTool nicht aktualisiert werden. Beenden Sie Excel und starten die Installation erneut!"});
+      } else if (err != null) {
         dialog.showMessageBox(win, {message: "Unerwarter Fehler: " + err.message});
       }
     });
@@ -313,7 +313,9 @@ function installCalcTool()
     })
   }
 
-  // TODO - Settings in xml
+  // TODO - import from old included settings (V1.0.4.1 or older)
+
+  // TODO - copy old .xml settings
 
   var sResult = dialog.showMessageBox(win, {
     type: "info",
