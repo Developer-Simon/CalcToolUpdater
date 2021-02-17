@@ -14,7 +14,7 @@
       <button id="StartInstallButton">
         <span id="version_label">VX.Y.Z</span> installieren
       </button>
-      <!-- <button id="DebugButton">Debugg-action</button> -->
+      <button id="DebugButton">Debugg-action</button> 
       <br><br>
 
     </div>
@@ -56,12 +56,10 @@
       var arg = "secondParam";
       ipcRenderer.send("installButton", arg);
     })
-    /*
     const debugbtnclick = document.getElementById('DebugButton');
     debugbtnclick.addEventListener('click', function() {
       ipcRenderer.send("debugbtnclick");
     })
-    */
 
     // Create update listener
     ipcRenderer.on('message', function(event, text) {

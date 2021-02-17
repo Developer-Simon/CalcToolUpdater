@@ -17,7 +17,8 @@
     "electron-log": "^1.3.0",
     "electron-store": "^6.0.1",
     "electron-updater": "^4.0.6",
-    "regedit": "^3.0.3"
+    "regedit": "^3.0.3",
+    "xml-js": "^1.6.11"
   },
   "build": {
     "win": {
@@ -42,5 +43,8 @@
         "dmg"
       ]
     }
-  }
+  },
+  "files": [
+    "./modules/installer.js"
+  ]
 }
