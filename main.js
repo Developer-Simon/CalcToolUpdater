@@ -152,7 +152,7 @@ app.on('ready', function() {
 
   createDefaultWindow();
   if (store.get('download-done') == 1) {
-    installCalcTool(win, g_sResFolder, g_registryItems);
+    setTimeout(installCalcTool, 2000, win, g_sResFolder, g_registryItems);
     store.set('download-done', 0);
   }
 });
