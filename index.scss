@@ -1,0 +1,16 @@
+// Custom.scss
+// Option A: Include all of Bootstrap
+
+@import "~bootstrap/scss/bootstrap"
+body{
+    background-color: #eee;
+    margin: auto;
+}
+.center {
+    margin: auto;
+    margin-top: 25px;
+    width: 50%;
+    border-radius: 25px;
+    padding: 10px;
+}
+// Add custom code after this

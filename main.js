@@ -111,9 +111,9 @@ function sendUpdateStatus(text) {
 }
 
 function createDefaultWindow() {
-  win = new BrowserWindow({ width: 400, height: 320});
-  //win = new BrowserWindow({ width: 1200, height: 1000});
-  //win.webContents.openDevTools();
+  //win = new BrowserWindow({ width: 400, height: 320});
+  win = new BrowserWindow({ width: 1200, height: 1000});
+  win.webContents.openDevTools();
   win.on('closed', () => {
     win = null;
   });

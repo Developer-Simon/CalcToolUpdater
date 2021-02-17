@@ -4,7 +4,6 @@ const path = require('path');
 const convert = require('xml-js');
 const { app, dialog, shell, BrowserWindow } = require('electron');
 const child_process = require('child_process');
-const { version } = require('os');
 
 /**
  * Install the Excel-AddIn

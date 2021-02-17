@@ -3,25 +3,30 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,300' rel='stylesheet' type='text/css'>
-	<title>CalculationToolClient</title>
+	<!-- <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,300' rel='stylesheet' type='text/css'> -->
+	<link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css" /> 
+  <link rel="stylesheet" href="./bootstrap.min.css" /> 
+  <link rel="stylesheet" href="./index.scss">
+
+  <title>CalculationToolClient</title>
+
+  <script>let $ = jQuery = require('jquery');</script>
+  <script>require('bootstrap');</script>
 </head>
 <body>
-  <main class="content-wraper" id="content-wraper">
-    <div class="content-blk">
-      Aktuelle Version:
-      <br>
-      <button id="StartInstallButton">
-        <span id="version_label">VX.Y.Z</span> installieren
-      </button>
-      <!--- <button id="DebugButton">Debugg-action</button> --->
-      <br><br>
+  <div class="center">
+    <h2>Aktuelle Version:</hs>
+    <br>
+    <button id="StartInstallButton" class="btn btn-primary">
+      <span id="version_label">VX.Y.Z</span> installieren
+    </button>
+    <!--- <button id="DebugButton">Debugg-action</button> --->
+    <br><br>
 
-    </div>
-    <div id="flex-update-download"></div>
-    <div id="update-status"></div>
-    <div id="message-viewer"></div>
-  </main>
+  </div>
+  <div id="flex-update-download"></div>
+  <div id="update-status"></div>
+  <div id="message-viewer"></div>
 
   <!-- Insert this line above script imports  -->
   <script>
