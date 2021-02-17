@@ -4,3 +4,4 @@ publish.ps1
 files
 CalcToolClient.exe.lnk
 res/
+CALC_TOOL_UPDATER.code-workspace

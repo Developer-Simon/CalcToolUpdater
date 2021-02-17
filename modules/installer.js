@@ -53,7 +53,7 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
   NewVersion = formatVersion(NewVersion);
 
   // disable for old Versions
-  if ((OldVersion.major == 1 && OldVersion.minor == 0) || OldVersion.major == 0) { 
+  if (OldVersion.raw != "" && ((OldVersion.major == 1 && OldVersion.minor == 0) || OldVersion.major == 0)) { 
     var msgResult = dialog.showMessageBox(win, { // for version V1.0.4.0 or older
       type: "warning",
       buttons: ["Abbrechen"],
@@ -63,7 +63,17 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
     return;
   } else { 
     // check version update intensity
-    if (OldVersion.major < NewVersion.major) {
+    if (OldVersion.raw == "") {
+      var msgResult = dialog.showMessageBox(win, {
+        type: "info",
+        buttons: ["Abbrechen", "Ja"],
+        defaultId: 1,
+        title: "Installation",
+        message: "Wollen Sie das Excel-CalcTool jetzt installieren?"
+      });
+      if (msgResult != 1) return;
+    }
+    else if (OldVersion.major < NewVersion.major) {
       var msgResult = dialog.showMessageBox(win, {
         type: "warning",
         buttons: ["Abbrechen","Fortfahren"],
