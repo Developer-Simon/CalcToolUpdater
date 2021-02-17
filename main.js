@@ -6,6 +6,8 @@ const {autoUpdater} = require("electron-updater");
 const regedit = require('regedit');
 const path = require('path');
 const fs = require('fs');
+const convert = require('xml-js');
+const { installCalcTool } = require('./modules/installer');
 
 //-------------------------------------------------------------------
 // Logging
@@ -96,7 +98,7 @@ else if (process.platform == 'win32') {
 // ------------------------------------------------------------------
 // Installation process
 // ------------------------------------------------------------------
-
+/*
 function formatVersion(versionObj) {
   var versionSub = new String(versionObj.raw);
   versionObj.major = Number(versionSub.substring(1, versionSub.search('.')));
@@ -275,15 +277,10 @@ function installCalcTool()
   // Delete CalculationTool.inf of V1.0.4.1
   if (fs.existsSync(path.join(sAddinPath, "\\CalculationTool.inf"))) fs.unlinkSync(path.join(sAddinPath, "\\CalculationTool.inf"));
 
-  // Rename CalculationTool.xml for transferring old Settings
-  if (fs.existsSync(sAddinPath + "CalculationTool_old.xml")) fs.unlinkSync(sAddinPath + "CalculationTool_old.xml");
-  if (fs.existsSync(sAddinPath + "CalculationTool.xml")) {
-    fs.rename(sAddinPath + "CalculationTool.xml", sAddinPath + "CalculationTool_old.xml", function(err) {
-      if (err != null) {
-        dialog.showMessageBox(win, {message: "Unerwarter Fehler: " + err.message});
-      }
-    });
-  } 
+  // Get CalculationTool.xml content for transfering old settings
+  var sOldConfig = fs.readFileSync(sAddinPath + "CalculationTool.xml", { flag: 'r'})
+  var OldConfig = convert.xml2js(sOldConfig, {compact: false});
+  if (fs.existsSync(sAddinPath + "CalculationTool.xml")) fs.unlinkSync(sAddinPath + "CalculationTool.xml");
 
   // Copy files
   fs.readdirSync(g_sResFolder + "calctool-files\\").forEach(file => {
@@ -300,7 +297,7 @@ function installCalcTool()
   });
 
   // Move DataBases
-  if (OldVersion.raw != "") {
+  if (OldVersion.raw == "") {
     fs.rename(sAddinPath + "ProductDataBase.xlsx", sAddinPath + "DataBases\\ProductDataBase.xlsx", function(err) {
       if (err != null) {
         dialog.showMessageBox(win, {message: "Unerwarter Fehler: " + err.message});
@@ -311,11 +308,19 @@ function installCalcTool()
         dialog.showMessageBox(win, {message: "Unerwarter Fehler: " + err.message});
       }
     })
+  } else {
+    fs.unlinkSync(sAddinPath + "ProductDataBase.xlsx");
+    fs.unlinkSync(sAddinPath + "ProjectDataBase.xlsx");
   }
 
   // TODO - import from old included settings (V1.0.4.1 or older)
 
-  // TODO - copy old .xml settings
+  // insert old .xml settings into new settings file
+  var sNewConfig = fs.readFileSync(sAddinPath + "CalculationTool.xml", { flag: 'r'});
+  var NewConfig = convert.xml2js(sNewConfig, {compact: false});
+  copySettings(NewConfig, OldConfig);
+  sNewConfig = convert.js2xml(NewConfig, {compact: false})
+  fs.writeFileSync(sAddinPath + "CalculationTool.xml", sNewConfig);
 
   var sResult = dialog.showMessageBox(win, {
     type: "info",
@@ -326,6 +331,38 @@ function installCalcTool()
   if (sResult == 1) shell.openItem(sAddinPath + "VersionLog_DE.txt");
 
 }
+
+function copySettings(NewSettings, OldSettings) {
+  for (x in NewSettings.elements) {
+    for (k in OldSettings.elements) { 
+      // value
+      if (NewSettings.elements[x].name == "value" && OldSettings.elements[k].name == "value") {
+        if (NewSettings.elements[x].attributes.index == OldSettings.elements[k].attributes.index) {
+          if (NewSettings.elements[x].hasOwnProperty("elements") && OldSettings.elements[k].hasOwnProperty("elements"))
+          NewSettings.elements[x].elements[0].text = OldSettings.elements[k].elements[0].text;
+          break;
+        }
+      }
+      // type with id
+      else if (NewSettings.elements[x].hasOwnProperty("attributes") && OldSettings.elements[k].hasOwnProperty("attributes")) {
+        if (NewSettings.elements[x].attributes.hasOwnProperty("id") && OldSettings.elements[k].attributes.hasOwnProperty("id")) {
+          if (NewSettings.elements[x].attributes.id == OldSettings.elements[k].attributes.id) {
+            copySettings(NewSettings.elements[x], OldSettings.elements[k]);
+            break;
+          }
+        }
+      }
+      else if (NewSettings.elements[x].name == OldSettings.elements[k].name) {
+        if (NewSettings.elements[x].hasOwnProperty("elements") && NewSettings.elements[k].hasOwnProperty("elements")) {
+          copySettings(NewSettings.elements[x], OldSettings.elements[k]);
+          break;
+        }
+      }
+    }
+  }
+}
+*/
+
 //-------------------------------------------------------------------
 // Open a window that displays the version
 //
@@ -416,13 +453,22 @@ app.on('window-all-closed', () => {
 // ipc events
 //-------------------------------------------------------------------
 ipcMain.on('installButton', function(event, arg) {
-  installCalcTool();
-  //startInstaller(`CalcToolInstaller_V${app.getVersion()}.EXE`);
+  installCalcTool(win, g_sResFolder, g_registryItems);
 })
 ipcMain.on('debugbtnclick', function(event, arg) {
+  /*
   sendStatusToWindow('download-done = ' + store.get('download-done'));
   store.set('download-done', 1);
   sendStatusToWindow('download-done = ' + store.get('download-done'));
+  */
+  var sAddinPath = app.getPath('appData') + "\\Microsoft\\AddIns\\CalculationTool\\";
+  var sNewConfig = fs.readFileSync(sAddinPath + "CalculationTool.xml", { flag: 'r'});
+  var sOldConfig = fs.readFileSync(sAddinPath + "CalculationTool_old.xml", { flag: 'r'})
+  var NewConfig = convert.xml2js(sNewConfig, {compact: false});
+  var OldConfig = convert.xml2js(sOldConfig, {compact: false});
+  copySettings(NewConfig, OldConfig);
+  sNewConfig = convert.js2xml(NewConfig, {compact: false})
+  fs.writeFileSync(sAddinPath + "CalculationTool.xml", sNewConfig);
 })
 ipcMain.on('downloadUpdate', function(event, arg) {
   autoUpdater.downloadUpdate();
