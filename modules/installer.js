@@ -2,11 +2,13 @@ const fs = require('fs');
 const regedit = require('regedit');
 const path = require('path');
 const convert = require('xml-js');
-const { app, dialog } = require('electron');
+const { app, dialog, shell, BrowserWindow } = require('electron');
+const child_process = require('child_process');
+const { version } = require('os');
 
 /**
  * Install the Excel-AddIn
- * @param {Window} win - The current window for dialogObject
+ * @param {BrowserWindow} win - The current window for dialogObject and progressBar
  * @param {string} sResFolder - Resource-folder, containing the files to install.
  * @param {Array} registryItems - Array of specific Registry-Items.
  */
@@ -28,33 +30,38 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
   }
 
   // get version out of registry
+  win.setProgressBar(0.1);
   registryItems.forEach(element => {
     if (element.key.includes('CalculationTool\\Version')) {
       OldVersion.raw = element.data.values[''].value;
     }
   });
-  // check installation
-  if (OldVersion.raw == "") { 
+
+  // get version out of CalcTool
+  if (fs.existsSync(sAddinPath + "CalculationTool.inf")) {
+    var fileContent = fs.readFileSync(sAddinPath + "CalculationTool.inf", { flag: 'r'});
+    var versionPos = fileContent.toString().search("Version=");
+    if (versionPos > 1) {
+      versionPos = versionPos + "Version=".length;
+      var sVersion = fileContent.toString().substr(versionPos, fileContent.toString().indexOf(".", versionPos + 5) - versionPos);
+      OldVersion.raw = sVersion;
+    }
+  }
+
+  // format versions
+  OldVersion = formatVersion(OldVersion);
+  NewVersion = formatVersion(NewVersion);
+
+  // disable for old Versions
+  if ((OldVersion.major == 1 && OldVersion.minor == 0) || OldVersion.major == 0) { 
     var msgResult = dialog.showMessageBox(win, { // for version V1.0.4.0 or older
       type: "warning",
-      buttons: ["Abbrechen","Fortfahren"],
-      defaultId: 1,
+      buttons: ["Abbrechen"],
       title: "Update für ältere Versionen akutell nicht verfügbar!",
-      message: "Bei einer Neuinstallation drücken Sie einfach \"Fortfahren\".\nFalls Sie bereits eine ältere Version des CalculationTool (V1.0.4.1 oder älter) installiert haben, drücken Sie \"Abbrechen\"!"
+      message: "Sie versuchen gerade von V" + OldVersion.raw + ".X auf V" + NewVersion.raw + " zu updaten. Leider ist für ältere Versionen des CalculationTool (V1.0.4.1 oder älter) aktuell noch keine Update-Funktion verfügbar!\nZum Updaten von älteren Installationen haben Sie zwei Optionen:\n- Deinstallieren Sie die alte Version des CalculationTool (Achtung: Alle Einstellungen und Datenbanken werden gelöscht!)\n- Updaten sie ihre bestehende Version auf die Version V1.1.0.0 oder höher"
     });
-    if (msgResult != 1) {
-      dialog.showMessageBox(win, {
-        type: "info",
-        title: "Weiteres Vorgehen",
-        message: "Zum Updaten von älteren Installation haben Sie zwei Optionen:\n- Deinstallieren Sie die alte Version des CalculationTool (Achtung: Alle Einstellungen und Datenbanken werden gelöscht!)\n- Updaten sie ihre bestehende Version auf die Version V1.1.0.0 oder höher"
-      })
-      return;
-    }
+    return;
   } else { 
-    // format versions
-    OldVersion = formatVersion(OldVersion);
-    NewVersion = formatVersion(NewVersion);
-
     // check version update intensity
     if (OldVersion.major < NewVersion.major) {
       var msgResult = dialog.showMessageBox(win, {
@@ -113,6 +120,7 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
 
   // install Add-In, .dbasync file-information and -icon in registry
   // TODO: check admin permissions
+  win.setProgressBar(0.2);
   var aCreateKeys = 
   ["HKCU\\Software\\Microsoft\\Office\\16.0\\Excel\\Add-in Manager\\",
    "HKCU\\Software\\CalculationTool\\Version\\",
@@ -167,8 +175,8 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
     }
   });
   
-  // file actions (sync)
   // Create Folders
+  win.setProgressBar(0.3);
   if (!fs.existsSync(sAddinPath)) fs.mkdirSync(sAddinPath);
   if (!fs.existsSync(sAddinPath + "DataBases\\")) fs.mkdirSync(sAddinPath + "DataBases\\");
   if (!fs.existsSync(sAddinPath + "Request\\")) fs.mkdirSync(sAddinPath + "Request\\");
@@ -178,14 +186,34 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
   // Delete CalculationTool.inf of V1.0.4.1
   if (fs.existsSync(path.join(sAddinPath, "\\CalculationTool.inf"))) fs.unlinkSync(path.join(sAddinPath, "\\CalculationTool.inf"));
 
-  // file actions (async)
-
   // Get CalculationTool.xml content for transfering old settings
-  var sOldConfig = fs.readFileSync(sAddinPath + "CalculationTool.xml", { flag: 'r'})
-  var OldConfig = convert.xml2js(sOldConfig, {compact: false});
-  if (fs.existsSync(sAddinPath + "CalculationTool.xml")) fs.unlinkSync(sAddinPath + "CalculationTool.xml");
+  var sOldConfig, OldConfig
+  if (fs.existsSync(sAddinPath + "CalculationTool.xml")) {
+    sOldConfig = fs.readFileSync(sAddinPath + "CalculationTool.xml", { flag: 'r'})
+    OldConfig = convert.xml2js(sOldConfig, {compact: false});
+    fs.unlinkSync(sAddinPath + "CalculationTool.xml");
+  }
 
   // Copy files
+  setTimeout(copyFiles, 1000, sResFolder, sAddinPath, win);
+
+  // Move DataBases
+  setTimeout(moveDataBases, 2000, OldVersion, sAddinPath, win);
+
+  // TODO - import from old included settings (V1.0.4.1 or older)
+  setTimeout(importSettings, 3000, OldVersion, sResFolder, win);
+
+  // insert old .xml settings into new settings file
+  setTimeout(insertSettings, 4000, sAddinPath, OldConfig, win);
+
+  // final result
+  setTimeout(finalResult, 5000, sAddinPath, win)
+
+}
+
+// Further Process functions
+function copyFiles(sResFolder, sAddinPath, win) {
+  win.setProgressBar(0.4);
   fs.readdirSync(sResFolder + "calctool-files\\").forEach(file => {
     fs.copyFile(sResFolder + "calctool-files\\" + file, sAddinPath + file, function(err) {
       if (err != null && err.code == 'EBUSY') {
@@ -198,8 +226,10 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
       }
     });
   });
+}
 
-  // Move DataBases
+function moveDataBases(OldVersion, sAddinPath, win) {
+  win.setProgressBar(0.6);
   if (OldVersion.raw == "") {
     fs.rename(sAddinPath + "ProductDataBase.xlsx", sAddinPath + "DataBases\\ProductDataBase.xlsx", function(err) {
       if (err != null) {
@@ -215,16 +245,44 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
     fs.unlinkSync(sAddinPath + "ProductDataBase.xlsx");
     fs.unlinkSync(sAddinPath + "ProjectDataBase.xlsx");
   }
+}
 
-  // TODO - import from old included settings (V1.0.4.1 or older)
+function importSettings(OldVersion, sResFolder, win) {
+  win.setProgressBar(0.65);
+  if (OldVersion.raw != '') {
+    if (OldVersion.major == 1 && (OldVersion.minor == 0 && OldVersion.patch >= 3 || OldVersion.minor == 1 && OldVersion.patch == 0)) {
+      dialog.showMessageBox(win, {
+        type: "warning",
+        title: "Übernahme der Einstellungen nicht verfügbar",
+        message: "Aktuell kann der Update-Client noch keine Updates von älteren Versionen (kleiner als V1.1.0) mit Übernahme der Einstellungen durchführen!\nPrüfen Sie insbesondere nach der Installation ihre DBASync-Einstellungen, falls Sie diese Funktion benutzen."});
+      /*
+      dialog.showMessageBox(win, {
+        type: "info",
+        title: "Excel wird gestartet",
+        message: "Excel wird gestartet, um die alten Einstellungen zu übernehmen!"});
+      var vbs = child_process.spawnSync('cscript.exe', [sResFolder + "calctool-settings-import\\CreateXMLFromOldSettings.vbs"]);
+      if (vbs.status == -1) {
+        dialog.showMessageBox(win, {
+          type: "warning",
+          title: "Fehler beim Übernehmen der Einstellungen",
+          message: "Leider konnten die Einstellungen nicht übernommen werden"});
+      }
+      */
+    }
+  }
+}
 
-  // insert old .xml settings into new settings file
+function insertSettings(sAddinPath, OldConfig, win) {
+  win.setProgressBar(0.8);
   var sNewConfig = fs.readFileSync(sAddinPath + "CalculationTool.xml", { flag: 'r'});
   var NewConfig = convert.xml2js(sNewConfig, {compact: false});
   copySettings(NewConfig, OldConfig);
   sNewConfig = convert.js2xml(NewConfig, {compact: false})
   fs.writeFileSync(sAddinPath + "CalculationTool.xml", sNewConfig);
+}
 
+function finalResult(sAddinPath, win) {
+  win.setProgressBar(1);
   var sResult = dialog.showMessageBox(win, {
     type: "info",
     buttons: ["Nein", "Ja"],
@@ -232,13 +290,10 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
     title: "Installation erfolgreich!",
     message: "Das Calculation-Tool wurde erfolgreich installiert. Wollen Sie jetzt die Änderungen einsehen?"});
   if (sResult == 1) shell.openItem(sAddinPath + "VersionLog_DE.txt");
-
+  win.setProgressBar(0);
 }
 
-function GetOldSettings(sAddinPath) {
-
-}
-
+// other functions
 function formatVersion(versionObj) {
     var versionSub = new String(versionObj.raw);
     versionObj.major = Number(versionSub.substring(1, versionSub.search('.')));
