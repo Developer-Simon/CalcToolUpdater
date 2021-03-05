@@ -10,6 +10,10 @@
 			"section": "Bug Fixes"
 		},
 		{
+			"tpye": "rm",
+			"section": "Removed"
+		},
+		{
 			"type": "chore",
 			"hidden": true
 		},
