@@ -5,6 +5,18 @@ const convert = require('xml-js');
 const { app, dialog, shell, BrowserWindow } = require('electron');
 const child_process = require('child_process');
 
+exports.importSettings = function(sResFolder, sAddinPath, win) {
+  dialog.showMessageBox(win, {message: sResFolder + "calctool-settings-import\\CreateXMLFromOldSettings.vbs"});
+  var vbs = child_process.spawnSync('cscript.exe', [sResFolder + "calctool-settings-import\\CreateXMLFromOldSettings.vbs", sAddinPath])
+  if (vbs.status.valueOf() != 0) {
+    dialog.showMessageBox(win, {
+      type: "warning",
+      title: "Fehler beim Importieren der Einstellungen",
+      message: "Beim Kopieren der Einstellungen ist ein Fehler aufgetreten. Die Einstellungen konnten nicht übernommen werden und es wurden die Standardeinstellungen zurückgesetzt.\nPrüfen Sie die Einstellungen auf Änderungen, insbesondere die Funktion DBAutoSync, welche standardmäßig deaktiviert ist.\nResultierender Fehlercode: " + vbs.status.toString()
+    });
+  }
+}
+
 /**
  * Install the Excel-AddIn
  * @param {BrowserWindow} win - The current window for dialogObject and progressBar
@@ -210,7 +222,7 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
   setTimeout(moveDataBases, 2000, OldVersion, sAddinPath, win);
 
   // TODO - import from old included settings (V1.0.4.1 or older)
-  setTimeout(importSettings, 3000, OldVersion, sResFolder, win);
+  setTimeout(importSettings, 3000, OldVersion, sResFolder, sAddinPath, win);
 
   // insert old .xml settings into new settings file
   setTimeout(insertSettings, 4000, sAddinPath, OldConfig, win);
@@ -256,27 +268,18 @@ function moveDataBases(OldVersion, sAddinPath, win) {
   }
 }
 
-function importSettings(OldVersion, sResFolder, win) {
+function importSettings(OldVersion, sResFolder, sAddinPath, win) {
   win.setProgressBar(0.65);
   if (OldVersion.raw != '') {
     if (OldVersion.major == 1 && (OldVersion.minor == 0 && OldVersion.patch >= 3 || OldVersion.minor == 1 && OldVersion.patch == 0)) {
-      dialog.showMessageBox(win, {
-        type: "warning",
-        title: "Übernahme der Einstellungen nicht verfügbar",
-        message: "Aktuell kann der Update-Client noch keine Updates von älteren Versionen (kleiner als V1.1.0) mit Übernahme der Einstellungen durchführen!\nPrüfen Sie insbesondere nach der Installation ihre DBASync-Einstellungen, falls Sie diese Funktion benutzen."});
-      /*
-      dialog.showMessageBox(win, {
-        type: "info",
-        title: "Excel wird gestartet",
-        message: "Excel wird gestartet, um die alten Einstellungen zu übernehmen!"});
-      var vbs = child_process.spawnSync('cscript.exe', [sResFolder + "calctool-settings-import\\CreateXMLFromOldSettings.vbs"]);
-      if (vbs.status == -1) {
+      var vbs = child_process.spawnSync('cscript.exe', [sResFolder + "calctool-settings-import\\CreateXMLFromOldSettings.vbs", sAddinPath])
+      if (vbs.status.valueOf() != 0) {
         dialog.showMessageBox(win, {
           type: "warning",
-          title: "Fehler beim Übernehmen der Einstellungen",
-          message: "Leider konnten die Einstellungen nicht übernommen werden"});
+          title: "Fehler beim Importieren der Einstellungen",
+          message: "Beim Kopieren der Einstellungen ist ein Fehler aufgetreten. Die Einstellungen konnten nicht übernommen werden und es wurden die Standardeinstellungen zurückgesetzt.\nPrüfen Sie die Einstellungen auf Änderungen, insbesondere die Funktion DBAutoSync, welche standardmäßig deaktiviert ist.\nResultierender Fehlercode: " + vbs.status.toString()
+        });
       }
-      */
     }
   }
 }
