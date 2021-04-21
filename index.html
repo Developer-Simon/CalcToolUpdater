@@ -15,20 +15,19 @@
 </head>
 <body>
   <div class="center">
-    <h2>Aktuelle Version:</hs>
-    <br>
-    <button id="StartInstallButton" class="btn btn-primary">
-      <span id="version_label">VX.Y.Z</span> installieren
-    </button>
-    <!--- <button id="DebugButton">Debugg-action</button> --->
-    <button id="DebugButton">Debugg-action</button>
-    <br><br>
-
+    <div class="container-fluid">
+      <h2>Aktuelle Version:</hs>
+      <br>
+      <button id="StartInstallButton" class="btn btn-primary">
+        <span id="version_label">VX.Y.Z</span> installieren
+      </button>
+      <!--- <button id="DebugButton">Debugg-action</button> --->
+      <br><br>
+    </div>
+    <div class="container-fluid" id="flex-update-download"></div>
+    <div class="container-fluid" id="update-status"></div>
+    <div class="container-fluid" id="message-viewer"></div>
   </div>
-  <div id="flex-update-download"></div>
-  <div id="update-status"></div>
-  <div id="message-viewer"></div>
-
   <!-- Insert this line above script imports  -->
   <script>
     if (typeof module === 'object') {

@@ -6,7 +6,7 @@ const {autoUpdater} = require("electron-updater");
 const regedit = require('regedit');
 const fs = require('fs');
 const convert = require('xml-js');
-const { installCalcTool, importSettings } = require('./modules/installer');
+const { installCalcTool } = require('./modules/installer');
 
 //-------------------------------------------------------------------
 // Logging
