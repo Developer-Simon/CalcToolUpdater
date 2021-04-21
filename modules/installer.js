@@ -4,7 +4,6 @@ const path = require('path');
 const convert = require('xml-js');
 const { app, dialog, shell, BrowserWindow } = require('electron');
 const child_process = require('child_process');
-const { version } = require('os');
 
 /**
  * Install the Excel-AddIn
@@ -204,26 +203,40 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
     fs.unlinkSync(sAddinPath + "CalculationTool.xml");
   }
 
+  // Option to save settings from older versions
+  win.setProgressBar(0.4);
+  if (OldVersion.raw != '') {
+    if (OldVersion.major == 1 && (OldVersion.minor == 0 && OldVersion.patch >= 3 || OldVersion.minor == 1 && OldVersion.patch == 0)) {
+      var msgResult = dialog.showMessageBox(win, {
+        type: "question",
+        buttons: ["Abbrechen", "Ja"],
+        defaultId: 1,
+        title: "Einstellungen übernehmen?",
+        message: "Wollen Sie die Einstellungen ihrer alten Version übernehmen?\nDann werden hierfür ihre alten Einstellungen gesichert und Sie können diese in den CalcTool-Einstellungen innerhalb der Excel-Anwendung importieren. Hierfür im \"Allgemein\"-Reiter den Button \"Importieren\" anwählen und den Anweisungen folgen."
+      });
+      if (msgResult = 1) {
+        fs.renameSync(sAddinPath + "CalculationTool.xlam", sAddinPath + "CalculationTool_old.xlam");
+      }
+    }
+  }
+
   // Copy files
   setTimeout(copyFiles, 1000, sResFolder, sAddinPath, win);
 
   // Move DataBases
   setTimeout(moveDataBases, 2000, OldVersion, sAddinPath, win);
 
-  // TODO - import from old included settings (V1.0.4.1 or older)
-  setTimeout(importSettings, 3000, OldVersion, sResFolder, win);
-
   // insert old .xml settings into new settings file
-  setTimeout(insertSettings, 4000, sAddinPath, OldConfig, win);
+  setTimeout(insertSettings, 3000, sAddinPath, OldConfig, win);
 
   // final result
-  setTimeout(finalResult, 5000, sAddinPath, win)
+  setTimeout(finalResult, 4000, sAddinPath, win)
 
 }
 
 // Further Process functions
 function copyFiles(sResFolder, sAddinPath, win) {
-  win.setProgressBar(0.4);
+  win.setProgressBar(0.5);
   fs.readdirSync(sResFolder + "calctool-files\\").forEach(file => {
     fs.copyFile(sResFolder + "calctool-files\\" + file, sAddinPath + file, function(err) {
       if (err != null && err.code == 'EBUSY') {
@@ -254,31 +267,6 @@ function moveDataBases(OldVersion, sAddinPath, win) {
   } else {
     fs.unlinkSync(sAddinPath + "ProductDataBase.xlsx");
     fs.unlinkSync(sAddinPath + "ProjectDataBase.xlsx");
-  }
-}
-
-function importSettings(OldVersion, sResFolder, win) {
-  win.setProgressBar(0.65);
-  if (OldVersion.raw != '') {
-    if (OldVersion.major == 1 && (OldVersion.minor == 0 && OldVersion.patch >= 3 || OldVersion.minor == 1 && OldVersion.patch == 0)) {
-      dialog.showMessageBox(win, {
-        type: "warning",
-        title: "Übernahme der Einstellungen nicht verfügbar",
-        message: "Aktuell kann der Update-Client noch keine Updates von älteren Versionen (kleiner als V1.1.0) mit Übernahme der Einstellungen durchführen!\nPrüfen Sie insbesondere nach der Installation ihre DBASync-Einstellungen, falls Sie diese Funktion benutzen."});
-      /*
-      dialog.showMessageBox(win, {
-        type: "info",
-        title: "Excel wird gestartet",
-        message: "Excel wird gestartet, um die alten Einstellungen zu übernehmen!"});
-      var vbs = child_process.spawnSync('cscript.exe', [sResFolder + "calctool-settings-import\\CreateXMLFromOldSettings.vbs"]);
-      if (vbs.status == -1) {
-        dialog.showMessageBox(win, {
-          type: "warning",
-          title: "Fehler beim Übernehmen der Einstellungen",
-          message: "Leider konnten die Einstellungen nicht übernommen werden"});
-      }
-      */
-    }
   }
 }
 

@@ -1,0 +1,44 @@
+{
+	"header": "CalcToolClient Changelog",
+	"types": [
+		{
+			"type": "feat",
+			"section": "Features"
+		},
+		{
+			"type": "fix",
+			"section": "Bug Fixes"
+		},
+		{
+			"tpye": "rm",
+			"section": "Removed"
+		},
+		{
+			"type": "chore",
+			"hidden": true
+		},
+		{
+			"type": "docs",
+			"hidden": true
+		},
+		{
+			"type": "style",
+			"hidden": true
+		},
+		{
+			"type": "refactor",
+			"hidden": true
+		},
+		{
+			"type": "perf",
+			"hidden": true
+		},
+		{
+			"type": "test",
+			"hidden": true
+		}
+	],
+	"preMajor": false,
+	"releaseCommitMessageFormat": "chore(release): {{currrentTag}}",
+	"issuePrefixes": ["#"]
+}

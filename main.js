@@ -111,9 +111,9 @@ function sendUpdateStatus(text) {
 }
 
 function createDefaultWindow() {
-  win = new BrowserWindow({ width: 400, height: 320});
-  //win = new BrowserWindow({ width: 1200, height: 1000});
-  //win.webContents.openDevTools();
+  //win = new BrowserWindow({ width: 400, height: 320});
+  win = new BrowserWindow({ width: 1200, height: 1000});
+  win.webContents.openDevTools();
   win.on('closed', () => {
     win = null;
   });
@@ -169,14 +169,7 @@ ipcMain.on('installButton', function(event, arg) {
   win.setProgressBar(0.1);
 })
 ipcMain.on('debugbtnclick', function(event, arg) {
-  var sAddinPath = app.getPath('appData') + "\\Microsoft\\AddIns\\CalculationTool\\";
-  var sNewConfig = fs.readFileSync(sAddinPath + "CalculationTool.xml", { flag: 'r'});
-  var sOldConfig = fs.readFileSync(sAddinPath + "CalculationTool_old.xml", { flag: 'r'})
-  var NewConfig = convert.xml2js(sNewConfig, {compact: false});
-  var OldConfig = convert.xml2js(sOldConfig, {compact: false});
-  copySettings(NewConfig, OldConfig);
-  sNewConfig = convert.js2xml(NewConfig, {compact: false})
-  fs.writeFileSync(sAddinPath + "CalculationTool.xml", sNewConfig);
+  importSettings(g_sResFolder, app.getPath('appData') + "\\Microsoft\\AddIns\\CalculationTool\\", win);
 })
 ipcMain.on('downloadUpdate', function(event, arg) {
   autoUpdater.downloadUpdate();
