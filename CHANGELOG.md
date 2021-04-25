@@ -1,4 +1,11 @@
 CalcToolClient Changelog
+### [1.2.1](///compare/v1.2.0...v1.2.1) (2021-04-25)
+
+
+### Bug Fixes
+
+* missing update notification if an update is available 9b0c6ba
+
 ## 1.2.0 (2021-04-21)
 
 
