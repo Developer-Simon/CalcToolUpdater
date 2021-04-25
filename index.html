@@ -5,7 +5,6 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<!-- <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,300' rel='stylesheet' type='text/css'> -->
 	<link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css" /> 
-  <link rel="stylesheet" href="./bootstrap.min.css" /> 
   <link rel="stylesheet" href="./index.scss">
 
   <title>CalculationToolClient</title>
@@ -61,10 +60,6 @@
       var arg = "secondParam";
       ipcRenderer.send("installButton", arg);
     })
-    const debugbtnclick = document.getElementById('DebugButton');
-    debugbtnclick.addEventListener('click', function() {
-      ipcRenderer.send("debugbtnclick");
-    })
 
     // Create update listener
     ipcRenderer.on('message', function(event, text) {
@@ -95,6 +90,13 @@
         ipcRenderer.send("downloadUpdate");
       })
     })
+  </script>
+  <script>
+    // debug button script - seperate script body for compiling issues  
+    const debugbtnclick = document.getElementById('DebugButton');
+    debugbtnclick.addEventListener('click', function() {
+    ipcRenderer.send("debugbtnclick");
+  })
   </script>
 </body>
 </html>

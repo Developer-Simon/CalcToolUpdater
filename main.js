@@ -169,7 +169,8 @@ ipcMain.on('installButton', function(event, arg) {
   win.setProgressBar(0.1);
 })
 ipcMain.on('debugbtnclick', function(event, arg) {
-  importSettings(g_sResFolder, app.getPath('appData') + "\\Microsoft\\AddIns\\CalculationTool\\", win);
+  autoUpdater.checkForUpdates();
+  //importSettings(g_sResFolder, app.getPath('appData') + "\\Microsoft\\AddIns\\CalculationTool\\", win);
 })
 ipcMain.on('downloadUpdate', function(event, arg) {
   autoUpdater.downloadUpdate();
