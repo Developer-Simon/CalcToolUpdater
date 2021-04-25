@@ -39,6 +39,6 @@
 		}
 	],
 	"preMajor": false,
-	"releaseCommitMessageFormat": "chore(release): {{currrentTag}}",
+	"releaseCommitMessageFormat": "release: {{currentTag}}",
 	"issuePrefixes": ["#"]
 }
