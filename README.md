@@ -5,7 +5,9 @@ This project is an electron based update service for my excel calculation tool f
 The Excel-CalculationTool AddIn is free to use (for now), but will be changed to a paid license model. This will become effective with the release of version 2. 
 
 ## Changes
-Watch all functional changes in the [Changelog](docs/CHANGELOG.md) file!
+Observe all changes to CalcToolUpdater in the file [Changelog.md](CHANGELOG.md)! /n
+
+Changes to the CalculationTool Excel AddIn are described on the [Release page](https://github.com/Developer-Simon/CalcToolUpdater/releases/).
 
 ## Copyright
 The source code of the Excel AddIn as well as this CalcToolUpdate application may not be copied or used in other projects, even if it is accessible via this repository.
