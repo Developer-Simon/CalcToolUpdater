@@ -7,7 +7,7 @@ const regedit = require('regedit');
 const fs = require('fs');
 const convert = require('xml-js');
 const { installCalcTool } = require('./modules/installer');
-const debug = true;
+const debug = false;
 
 
 //-------------------------------------------------------------------
