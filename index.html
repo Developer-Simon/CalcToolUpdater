@@ -15,11 +15,27 @@
 <body>
   <div class="center">
     <div class="container-fluid">
-      <h2>Aktuelle Version:</hs>
-      <br>
-      <button id="StartInstallButton" class="btn btn-primary">
-        <span id="version_label">VX.Y.Z</span> installieren
-      </button>
+      <style type="text/css">
+        button {
+          margin-right: 5px;
+        }
+        h4 {
+          padding: 4px
+        }
+      </style>
+      <h4>Excel-AddIn Version</h4>
+      <div class="alert alert-primary">
+        <span id="addin-version">Keine Version installiert</span>
+      </div>
+      <h4>Verfügbare Version</h4>
+      <div class="alert alert-primary">
+        <span id="version_label">VX.Y.Z</span>
+      </div>
+      <div id="install-button-line">
+        <button id="StartInstallButton" class="btn btn-primary">
+          Verfügbare Version installieren
+        </button>
+      </div>
       <!--- <button id="DebugButton">Debugg-action</button> --->
       <br><br>
     </div>
@@ -88,6 +104,17 @@
       const updatebtnclick = document.getElementById('UpdateDownloadButton');
       updatebtnclick.addEventListener('click', function() {
         ipcRenderer.send("downloadUpdate");
+      })
+
+      container = document.getElementById('install-button-line');
+      var childBefore = document.getElementById('StartInstallButton');
+      var button = document.createElement('button');
+      button.id = 'update-download-button';
+      button.className = "btn btn-success";
+      button.innerHTML = text;
+      container.insertBefore(button, childBefore);
+      button.addEventListener('click', function() {
+        ipcRenderer.send('download-update-req')
       })
     })
   </script>
