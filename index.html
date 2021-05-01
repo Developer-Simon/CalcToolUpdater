@@ -14,7 +14,7 @@
 </head>
 <body>
   <div class="center">
-    <div class="container-fluid">
+    <div id="main-frame" class="container-fluid">
       <style type="text/css">
         button {
           margin-right: 5px;
@@ -25,9 +25,7 @@
         }
       </style>
       <h4>Excel-AddIn Version</h4>
-      <div class="alert alert-primary">
-        <span id="addin-version">Keine Version installiert</span>
-      </div>
+      <div id="addin-version" class="alert alert-primary">Keine Version installiert</div>
       <h4 id="available-version">Verfügbare Version </h4>
       <div class="alert alert-primary">
         <span id="version_label">VX.Y.Z</span>
@@ -38,8 +36,6 @@
           Verfügbare Version installieren
         </button>
       </div>
-      
-      <!--- <button id= "DebugButton">Debugg-action</button> --->
     </div>
     <div class="container-fluid" id="message-viewer"></div>
   </div>
@@ -65,17 +61,10 @@
     }
   </script>
 
-  <!-- Electron Scripts -->
+  <!-- Electron Script Communication -->
   <script type="text/javascript">
     // Create ipcRenderer
     const { ipcRenderer } = require('electron');
-
-    // Create button event
-    const installButton = document.getElementById('start-install-button');
-    installButton.addEventListener('click', function() {
-      var arg = 'click';
-      ipcRenderer.send('install-button', arg);
-    })
 
     // Create update listener
     ipcRenderer.on('message', function(event, text) {
@@ -116,13 +105,32 @@
       small.innerHTML = "- neuere Version verfügbar!";
       container.appendChild(small); 
     })
-  </script>
-  <script>
-    // debug button script - seperate script body for compiling issues  
-    const debugbtnclick = document.getElementById('DebugButton');
-    debugbtnclick.addEventListener('click', function() {
-    ipcRenderer.send("debugbtnclick");
-  })
+
+    // Get Excel-Addin version
+    ipcRenderer.on('excel-addin-version', function(event, text) {
+      var addinVersion = document.getElementById('addin-version');
+      var updaterVersion = document.getElementById('version_label');
+      addinVersion.innerHTML = text;    
+    })
+
+    // On Debug, create debug button
+    ipcRenderer.on('debug', function(event, text) {
+      var container = document.getElementById('main-frame');
+      var button = document.createElement('button');
+      button.className = "btn btn-warning";
+      button.innerHTML = "Debug action";
+      container.appendChild(button);
+      button.addEventListener('click', function() {
+        ipcRenderer.send('debugbtnclick');
+      })
+    })
+
+    // Create install-button event
+    const installButton = document.getElementById('start-install-button');
+    installButton.addEventListener('click', function() {
+      var arg = 'click';
+      ipcRenderer.send('install-button', arg);
+    })
   </script>
 </body>
 </html>

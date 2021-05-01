@@ -49,6 +49,12 @@ regedit.list(['HKCU\\SOFTWARE\\CalculationTool\\Language',
 })
 .on('finish', function() {
   //dialog.showMessageBox(win, {message: "All Registry Keys loaded!"});
+
+  g_registryItems.forEach(element => {
+    if (element.key.includes('CalculationTool\\Version')) {
+      setTimeout(setAddinVersion, 1000, "v" + element.data.values[''].value);
+    }
+  });
 })
 .on('error', function(err) {
   ;
@@ -112,6 +118,9 @@ function createButtonAtWindow(text) {
 function sendUpdateStatus(text) {
   win.webContents.send('update-status', text);
 }
+function setAddinVersion(text) {
+  win.webContents.send('excel-addin-version', text);
+}
 
 function createDefaultWindow() {
   if (debug) {
@@ -174,9 +183,11 @@ app.on('window-all-closed', () => {
 //-------------------------------------------------------------------
 // ipc events
 //-------------------------------------------------------------------
-ipcMain.on('installButton', function(event, arg) {
-  installCalcTool(win, g_sResFolder, g_registryItems);
-  win.setProgressBar(0.1);
+ipcMain.on('install-button', function(event, arg) {
+  if (arg = 'click') {
+    installCalcTool(win, g_sResFolder, g_registryItems);
+    win.setProgressBar(0.1);
+  }
 })
 ipcMain.on('debugbtnclick', function(event, arg) {
   autoUpdater.checkForUpdates();
