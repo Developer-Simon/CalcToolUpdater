@@ -1,4 +1,12 @@
 CalcToolClient Changelog
+### [1.2.2](///compare/v1.2.1...v1.2.2) (2021-05-01)
+
+
+### Features
+
+* optimized update status message view and window size 1af3099
+* Refactored CalcToolClient-UI - More Information about installed versions and available updates cd3c935
+
 ### [1.2.1](///compare/v1.2.0...v1.2.1) (2021-04-25)
 
 
