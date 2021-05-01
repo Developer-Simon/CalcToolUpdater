@@ -18,6 +18,7 @@
       <style type="text/css">
         button {
           margin-right: 5px;
+          margin-bottom: 5px;
         }
         h4 {
           padding: 4px
@@ -27,20 +28,19 @@
       <div class="alert alert-primary">
         <span id="addin-version">Keine Version installiert</span>
       </div>
-      <h4>Verfügbare Version</h4>
+      <h4 id="available-version">Verfügbare Version </h4>
       <div class="alert alert-primary">
         <span id="version_label">VX.Y.Z</span>
       </div>
+      <div id="update-status-viewer"></div>
       <div id="install-button-line">
-        <button id="StartInstallButton" class="btn btn-primary">
+        <button id="start-install-button" class="btn btn-primary">
           Verfügbare Version installieren
         </button>
       </div>
-      <!--- <button id="DebugButton">Debugg-action</button> --->
-      <br><br>
+      
+      <!--- <button id= "DebugButton">Debugg-action</button> --->
     </div>
-    <div class="container-fluid" id="flex-update-download"></div>
-    <div class="container-fluid" id="update-status"></div>
     <div class="container-fluid" id="message-viewer"></div>
   </div>
   <!-- Insert this line above script imports  -->
@@ -71,10 +71,10 @@
     const { ipcRenderer } = require('electron');
 
     // Create button event
-    const installButton = document.getElementById('StartInstallButton');
+    const installButton = document.getElementById('start-install-button');
     installButton.addEventListener('click', function() {
-      var arg = "secondParam";
-      ipcRenderer.send("installButton", arg);
+      var arg = 'click';
+      ipcRenderer.send('install-button', arg);
     })
 
     // Create update listener
@@ -91,31 +91,30 @@
       message.innerHTML = text;
     })
 
-    // Create update button
+    // Create update message and button 
     ipcRenderer.on('add-update-button', function(event, text) {
-      var container = document.getElementById('flex-update-download');
-      var label = document.createElement('div');
-      var action = document.createElement('button');
-      action.innerHTML = text;
-      action.id = 'UpdateDownloadButton';
-      label.innerText = 'Neue Version verfügbar: ';
-      container.appendChild(label);
-      container.appendChild(action);
-      const updatebtnclick = document.getElementById('UpdateDownloadButton');
-      updatebtnclick.addEventListener('click', function() {
-        ipcRenderer.send("downloadUpdate");
-      })
-
-      container = document.getElementById('install-button-line');
-      var childBefore = document.getElementById('StartInstallButton');
+      var container = document.getElementById('install-button-line');
+      var childBefore = document.getElementById('start-install-button');
       var button = document.createElement('button');
       button.id = 'update-download-button';
       button.className = "btn btn-success";
       button.innerHTML = text;
       container.insertBefore(button, childBefore);
       button.addEventListener('click', function() {
-        ipcRenderer.send('download-update-req')
+        ipcRenderer.send('download-update-req');
+        // add status viewer
+        var viewer = document.getElementById('update-status-viewer');
+        var block = document.createElement('pre');
+        var codeBlock = document.createElement('code');
+        codeBlock.id = "update-status";
+        viewer.appendChild(block);
+        block.appendChild(codeBlock);
       })
+      container = document.getElementById('available-version');
+      var small = document.createElement('small');
+      small.className = "text-muted";
+      small.innerHTML = "- neuere Version verfügbar!";
+      container.appendChild(small); 
     })
   </script>
   <script>

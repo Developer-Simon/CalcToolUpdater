@@ -7,6 +7,8 @@ const regedit = require('regedit');
 const fs = require('fs');
 const convert = require('xml-js');
 const { installCalcTool } = require('./modules/installer');
+const debug = true;
+
 
 //-------------------------------------------------------------------
 // Logging
@@ -98,6 +100,7 @@ else if (process.platform == 'win32') {
 // Window content
 //-------------------------------------------------------------------
 let win;
+var winWidth = 500, winHeight = 340;
 
 function sendStatusToWindow(text) {
   log.info(text);
@@ -111,9 +114,14 @@ function sendUpdateStatus(text) {
 }
 
 function createDefaultWindow() {
-  //win = new BrowserWindow({ width: 400, height: 320});
-  win = new BrowserWindow({ width: 1200, height: 1000});
-  win.webContents.openDevTools();
+  if (debug) {
+    winWidth = 1200;
+    winHeight = 1000;
+  }
+  win = new BrowserWindow({ width: winWidth, height: winHeight});
+  if (debug) {
+    win.webContents.openDevTools();
+  }
   win.on('closed', () => {
     win = null;
   });
@@ -130,16 +138,18 @@ autoUpdater.on('update-not-available', (info) => {
   //sendStatusToWindow('Update not available.');
 })
 autoUpdater.on('error', (err) => {
-  sendUpdateStatus('Error in auto-updater. ' + err);
+  sendStatusToWindow('Error in auto-updater. ' + err);
 })
 autoUpdater.on('download-progress', (progressObj) => {
   let log_message = "Download speed: " + Math.round(progressObj.bytesPerSecond / (1024 * 2) * 1000) / 1000 + ' KB/s';
   log_message = log_message + ' - Downloaded ' + Math.round(progressObj.percent * 10) / 10 + '%';
   log_message = log_message + ' (' + Math.round(progressObj.transferred / (1024 * 2) * 1000) / 1000 + ' KB/' + Math.round(progressObj.total / (1024 * 2) * 1000) / 1000 + ' KB)';
   sendUpdateStatus(log_message);
+  win.setSize(winWidth, winHeight + 30);
 })
 autoUpdater.on('update-downloaded', (info) => {
-  sendUpdateStatus('Update heruntergeladen! Starten sie den CalcToolClient neu, um das CalculationTool Update zu beginnen.');
+  sendUpdateStatus("Update heruntergeladen! Um das AddIn zu updaten,\nstarten sie den CalcToolClient neu!");
+  win.setSize(winWidth, winHeight + 60);
 });
 
 //-------------------------------------------------------------------
@@ -172,7 +182,7 @@ ipcMain.on('debugbtnclick', function(event, arg) {
   autoUpdater.checkForUpdates();
   //importSettings(g_sResFolder, app.getPath('appData') + "\\Microsoft\\AddIns\\CalculationTool\\", win);
 })
-ipcMain.on('downloadUpdate', function(event, arg) {
+ipcMain.on('download-update-req', function(event, arg) {
   autoUpdater.downloadUpdate();
 })
 
