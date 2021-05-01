@@ -14,17 +14,29 @@
 </head>
 <body>
   <div class="center">
-    <div class="container-fluid">
-      <h2>Aktuelle Version:</hs>
-      <br>
-      <button id="StartInstallButton" class="btn btn-primary">
-        <span id="version_label">VX.Y.Z</span> installieren
-      </button>
-      <!--- <button id="DebugButton">Debugg-action</button> --->
-      <br><br>
+    <div id="main-frame" class="container-fluid">
+      <style type="text/css">
+        button {
+          margin-right: 5px;
+          margin-bottom: 5px;
+        }
+        h4 {
+          padding: 4px
+        }
+      </style>
+      <h4>Excel-AddIn Version</h4>
+      <div id="addin-version" class="alert alert-primary">Keine Version installiert</div>
+      <h4 id="available-version">Verfügbare Version </h4>
+      <div class="alert alert-primary">
+        <span id="version_label">VX.Y.Z</span>
+      </div>
+      <div id="update-status-viewer"></div>
+      <div id="install-button-line">
+        <button id="start-install-button" class="btn btn-primary">
+          Verfügbare Version installieren
+        </button>
+      </div>
     </div>
-    <div class="container-fluid" id="flex-update-download"></div>
-    <div class="container-fluid" id="update-status"></div>
     <div class="container-fluid" id="message-viewer"></div>
   </div>
   <!-- Insert this line above script imports  -->
@@ -49,17 +61,10 @@
     }
   </script>
 
-  <!-- Electron Scripts -->
+  <!-- Electron Script Communication -->
   <script type="text/javascript">
     // Create ipcRenderer
     const { ipcRenderer } = require('electron');
-
-    // Create button event
-    const installButton = document.getElementById('StartInstallButton');
-    installButton.addEventListener('click', function() {
-      var arg = "secondParam";
-      ipcRenderer.send("installButton", arg);
-    })
 
     // Create update listener
     ipcRenderer.on('message', function(event, text) {
@@ -75,28 +80,57 @@
       message.innerHTML = text;
     })
 
-    // Create update button
+    // Create update message and button 
     ipcRenderer.on('add-update-button', function(event, text) {
-      var container = document.getElementById('flex-update-download');
-      var label = document.createElement('div');
-      var action = document.createElement('button');
-      action.innerHTML = text;
-      action.id = 'UpdateDownloadButton';
-      label.innerText = 'Neue Version verfügbar: ';
-      container.appendChild(label);
-      container.appendChild(action);
-      const updatebtnclick = document.getElementById('UpdateDownloadButton');
-      updatebtnclick.addEventListener('click', function() {
-        ipcRenderer.send("downloadUpdate");
+      var container = document.getElementById('install-button-line');
+      var childBefore = document.getElementById('start-install-button');
+      var button = document.createElement('button');
+      button.id = 'update-download-button';
+      button.className = "btn btn-success";
+      button.innerHTML = text;
+      container.insertBefore(button, childBefore);
+      button.addEventListener('click', function() {
+        ipcRenderer.send('download-update-req');
+        // add status viewer
+        var viewer = document.getElementById('update-status-viewer');
+        var block = document.createElement('pre');
+        var codeBlock = document.createElement('code');
+        codeBlock.id = "update-status";
+        viewer.appendChild(block);
+        block.appendChild(codeBlock);
+      })
+      container = document.getElementById('available-version');
+      var small = document.createElement('small');
+      small.className = "text-muted";
+      small.innerHTML = "- neuere Version verfügbar!";
+      container.appendChild(small); 
+    })
+
+    // Get Excel-Addin version
+    ipcRenderer.on('excel-addin-version', function(event, text) {
+      var addinVersion = document.getElementById('addin-version');
+      var updaterVersion = document.getElementById('version_label');
+      addinVersion.innerHTML = text;    
+    })
+
+    // On Debug, create debug button
+    ipcRenderer.on('debug', function(event, text) {
+      var container = document.getElementById('main-frame');
+      var button = document.createElement('button');
+      button.className = "btn btn-warning";
+      button.innerHTML = "Debug action";
+      container.appendChild(button);
+      button.addEventListener('click', function() {
+        ipcRenderer.send('debugbtnclick');
       })
     })
-  </script>
-  <script>
-    // debug button script - seperate script body for compiling issues  
-    const debugbtnclick = document.getElementById('DebugButton');
-    debugbtnclick.addEventListener('click', function() {
-    ipcRenderer.send("debugbtnclick");
-  })
+
+    // Create install-button event
+    const installButton = document.getElementById('start-install-button');
+    installButton.addEventListener('click', function() {
+      var arg = 'click';
+      ipcRenderer.send('install-button', arg);
+    })
   </script>
 </body>
 </html>

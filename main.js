@@ -7,6 +7,8 @@ const regedit = require('regedit');
 const fs = require('fs');
 const convert = require('xml-js');
 const { installCalcTool } = require('./modules/installer');
+const debug = true;
+
 
 //-------------------------------------------------------------------
 // Logging
@@ -47,6 +49,12 @@ regedit.list(['HKCU\\SOFTWARE\\CalculationTool\\Language',
 })
 .on('finish', function() {
   //dialog.showMessageBox(win, {message: "All Registry Keys loaded!"});
+
+  g_registryItems.forEach(element => {
+    if (element.key.includes('CalculationTool\\Version')) {
+      setTimeout(setAddinVersion, 1000, "v" + element.data.values[''].value);
+    }
+  });
 })
 .on('error', function(err) {
   ;
@@ -98,6 +106,7 @@ else if (process.platform == 'win32') {
 // Window content
 //-------------------------------------------------------------------
 let win;
+var winWidth = 500, winHeight = 340;
 
 function sendStatusToWindow(text) {
   log.info(text);
@@ -109,11 +118,19 @@ function createButtonAtWindow(text) {
 function sendUpdateStatus(text) {
   win.webContents.send('update-status', text);
 }
+function setAddinVersion(text) {
+  win.webContents.send('excel-addin-version', text);
+}
 
 function createDefaultWindow() {
-  win = new BrowserWindow({ width: 400, height: 320});
-  //win = new BrowserWindow({ width: 1200, height: 1000});
-  //win.webContents.openDevTools();
+  if (debug) {
+    winWidth = 1200;
+    winHeight = 1000;
+  }
+  win = new BrowserWindow({ width: winWidth, height: winHeight});
+  if (debug) {
+    win.webContents.openDevTools();
+  }
   win.on('closed', () => {
     win = null;
   });
@@ -130,16 +147,18 @@ autoUpdater.on('update-not-available', (info) => {
   //sendStatusToWindow('Update not available.');
 })
 autoUpdater.on('error', (err) => {
-  sendUpdateStatus('Error in auto-updater. ' + err);
+  sendStatusToWindow('Error in auto-updater. ' + err);
 })
 autoUpdater.on('download-progress', (progressObj) => {
   let log_message = "Download speed: " + Math.round(progressObj.bytesPerSecond / (1024 * 2) * 1000) / 1000 + ' KB/s';
   log_message = log_message + ' - Downloaded ' + Math.round(progressObj.percent * 10) / 10 + '%';
   log_message = log_message + ' (' + Math.round(progressObj.transferred / (1024 * 2) * 1000) / 1000 + ' KB/' + Math.round(progressObj.total / (1024 * 2) * 1000) / 1000 + ' KB)';
   sendUpdateStatus(log_message);
+  win.setSize(winWidth, winHeight + 30);
 })
 autoUpdater.on('update-downloaded', (info) => {
-  sendUpdateStatus('Update heruntergeladen! Starten sie den CalcToolClient neu, um das CalculationTool Update zu beginnen.');
+  sendUpdateStatus("Update heruntergeladen! Um das AddIn zu updaten,\nstarten sie den CalcToolClient neu!");
+  win.setSize(winWidth, winHeight + 60);
 });
 
 //-------------------------------------------------------------------
@@ -164,15 +183,17 @@ app.on('window-all-closed', () => {
 //-------------------------------------------------------------------
 // ipc events
 //-------------------------------------------------------------------
-ipcMain.on('installButton', function(event, arg) {
-  installCalcTool(win, g_sResFolder, g_registryItems);
-  win.setProgressBar(0.1);
+ipcMain.on('install-button', function(event, arg) {
+  if (arg = 'click') {
+    installCalcTool(win, g_sResFolder, g_registryItems);
+    win.setProgressBar(0.1);
+  }
 })
 ipcMain.on('debugbtnclick', function(event, arg) {
   autoUpdater.checkForUpdates();
   //importSettings(g_sResFolder, app.getPath('appData') + "\\Microsoft\\AddIns\\CalculationTool\\", win);
 })
-ipcMain.on('downloadUpdate', function(event, arg) {
+ipcMain.on('download-update-req', function(event, arg) {
   autoUpdater.downloadUpdate();
 })
 
