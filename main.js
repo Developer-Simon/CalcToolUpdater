@@ -43,18 +43,33 @@ var g_sResFolder = app.getAppPath();
 var g_registryItems = Array(0);
 regedit.setExternalVBSLocation(g_sResFolder + "winreg-vbs\\");
 regedit.list(['HKCU\\SOFTWARE\\CalculationTool\\Language', 
-              'HKCU\\SOFTWARE\\CalculationTool\\Version'])
+              'HKCU\\SOFTWARE\\CalculationTool\\Version',
+              'HKCU\\SOFTWARE\\Microsoft\\Office\\16.0\\Excel'])
 .on('data', function(entry) {
   g_registryItems.push(entry);
 })
 .on('finish', function() {
   //dialog.showMessageBox(win, {message: "All Registry Keys loaded!"});
+  var bExcelFound = false
 
   g_registryItems.forEach(element => {
+    // get AddIn version
     if (element.key.includes('CalculationTool\\Version')) {
       setTimeout(setAddinVersion, 1000, "v" + element.data.values[''].value);
     }
+    // get Excel version
+    else if (element.key.includes('Microsoft\\Office\\16.0\\Excel')) {
+      try {
+        if (element.sss.data.values['ExcelName']) {
+          bExcelFound = true;
+        }
+      } catch (error) {
+        bExcelFound = false
+      }
+    }
   });
+
+  setTimeout(sendMessage, 1000, 'excel-installation-status', bExcelFound);
 })
 .on('error', function(err) {
   ;
@@ -121,6 +136,10 @@ function sendUpdateStatus(text) {
 function setAddinVersion(text) {
   win.webContents.send('excel-addin-version', text);
 }
+function sendMessage(event, arg) {
+  log.info("ipcRenderer event: " + event + " - " + toString(arg));
+  win.webContents.send(event, arg);
+}
 
 function createDefaultWindow() {
   if (debug) {
@@ -174,6 +193,9 @@ app.on('ready', function() {
     setTimeout(installCalcTool, 2000, win, g_sResFolder, g_registryItems);
     store.set('download-done', 0);
   }
+
+  // lite delayed events
+ 
 });
 
 app.on('window-all-closed', () => {
