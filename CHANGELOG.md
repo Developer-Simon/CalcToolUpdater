@@ -1,4 +1,19 @@
 CalcToolClient Changelog
+### [1.2.3](///compare/v1.2.2...v1.2.3) (2021-05-08)
+
+
+### Features
+
+* Advice to missing excel-installation identification 8483ed2
+* Changelog is now shown as markdown-compiled html in a separate window 35ef5a1
+* color highlighting addin version compared to current client version 13b8087
+
+
+### Bug Fixes
+
+* Diabled installation caused by remaining CalculationTool.inf file, even though a version above is already installated a125414
+* Error while installation on new devices (caused by trying to copy old settings) 399058a
+
 ### [1.2.2](///compare/v1.2.1...v1.2.2) (2021-05-01)
 
 
