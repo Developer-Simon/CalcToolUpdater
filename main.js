@@ -50,13 +50,17 @@ regedit.list(['HKCU\\SOFTWARE\\CalculationTool\\Language',
   g_registryItems.push(entry);
 })
 .on('finish', function() {
-  //dialog.showMessageBox(win, {message: "All Registry Keys loaded!"});
   var bExcelFound = false;
-  var ReadVersion = new _Version("");
+  var AddInVersion = new _Version("");
+  var UpdaterVersion = new _Version(app.getVersion());
 
-  ReadVersion._getVersionFromRegistry(g_registryItems);
-  if (ReadVersion.raw != "") {
-    setTimeout(sendMessage, 1000, 'excel-addin-version' , "v" + ReadVersion.raw);
+  AddInVersion._getVersionFromRegistry(g_registryItems);
+  if (AddInVersion.raw != "") {
+    setTimeout(sendMessage, 1000, 'excel-addin-version' , "v" + AddInVersion.raw);
+  }
+
+  if (AddInVersion.isOlderThan(UpdaterVersion)) {
+    setTimeout(sendMessage, 1000, 'excel-addin-version-old', true);
   }
 
   g_registryItems.forEach(element => {

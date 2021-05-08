@@ -15,9 +15,49 @@ class _Version {
     }
   }
 
+  /**
+   * set version by string
+   * @param {string} sVersion - Version string formatted like 'X.X.X'
+   */
   setVersion(sVersion) {
     this.raw = sVersion;
     this._formatVersion();
+  }
+
+  /**
+   * check if an other version is newer to this
+   * @param {_Version} otherVersion - other version to compare
+   * @returns {boolean} false - if 'otherVersion' is older or equal
+   */
+  isOlderThan(otherVersion) {
+    if (this.equals(otherVersion)) {
+      return false;
+    }
+    else if (this.major < otherVersion.major) {
+      return true;
+    }
+    else if (this.minor < otherVersion.minor) {
+      return true;
+    }
+    else if (this.patch < otherVersion.patch) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+  /**
+   * check if an other version is equal to this
+   * @param {_Version} otherVersion - other version to compare
+   * @returns {boolean} false - if 'otherVersion' is not equal
+   */
+  equals(otherVersion) {
+    if (this.major == otherVersion.major &&
+      this.minor == otherVersion.minor &&
+      this.patch == otherVersion.patch) {
+      return true;
+    }
+    return false;
   }
 
   _formatVersion() {

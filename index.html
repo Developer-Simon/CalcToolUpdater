@@ -25,7 +25,7 @@
         }
       </style>
       <h4>Excel-AddIn Version</h4>
-      <div class="alert alert-primary">
+      <div id="addin-version-container" class="alert alert-primary">
         <span id="addin-version">Keine Version installiert</span>
         <span> </span>
         <div id="excel-installation-warning"></div>
@@ -124,6 +124,17 @@
       var addinVersion = document.getElementById('addin-version');
       var updaterVersion = document.getElementById('version_label');
       addinVersion.innerText = text;    
+    })
+
+    // Event if Excel-Addin version is older than updater
+    ipcRenderer.on('excel-addin-version-old', function(event, isOld) {
+      var addinVersion = document.getElementById('addin-version-container');
+      if (isOld) {
+        addinVersion.className = "alert alert-warning"; 
+      } 
+      else {
+        addinVersion.className = "alert alert-success"; 
+      }  
     })
 
     // On Debug, create debug button
