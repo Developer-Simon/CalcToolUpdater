@@ -3,6 +3,7 @@ const regedit = require('regedit');
 const path = require('path');
 const convert = require('xml-js');
 const { app, dialog, shell, BrowserWindow } = require('electron');
+const md = require('markdown-it')();
 
 class _Version {
   constructor(sVersion) {
@@ -360,7 +361,15 @@ function finalResult(sAddinPath, win) {
     defaultId: 1,
     title: "Installation erfolgreich!",
     message: "Das Calculation-Tool wurde erfolgreich installiert. Wollen Sie jetzt die Änderungen einsehen?"});
-  if (sResult == 1) shell.openItem(sAddinPath + "VersionLog_DE.txt");
+  if (sResult == 1) {
+    var sChangelog = fs.readFileSync(sAddinPath + "VersionLog_DE.txt", { flag: 'r'});
+    var sHTML = md.render(sChangelog.toString());
+    let ChangelogWindow = new BrowserWindow({ width: 800, height: 400 });
+    fs.writeFileSync(sAddinPath + "VersionLog_DE.html", sHTML);
+    ChangelogWindow.loadFile(sAddinPath + "VersionLog_DE.html");
+    ChangelogWindow.on('close', () => { win = null });
+    ChangelogWindow.show();
+  }
   win.setProgressBar(0);
 }
 

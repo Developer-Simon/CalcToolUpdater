@@ -1,6 +1,6 @@
 {
 	"name": "CalcToolClient",
-	"version": "1.0.4",
+	"version": "1.2.2",
 	"main": "main.js",
 	"description": "Program to install and update MS-Excel CalculationTool",
 	"author": "Developer-Simon",
@@ -21,6 +21,7 @@
 		"electron-store": "^6.0.1",
 		"electron-updater": "^4.3.8",
 		"jquery": "^3.6.0",
+		"markdown-it": "^12.0.6",
 		"popper.js": "^1.16.1",
 		"regedit": "^3.0.3",
 		"xml-js": "^1.6.11"
@@ -28,14 +29,14 @@
 	"build": {
 		"win": {
 			"target": [
-                {
-                    "target": "nsis",
-                    "arch": [
-                        "x64",
-                        "ia32"
-                    ]
-                }
-            ],
+				{
+					"target": "nsis",
+					"arch": [
+						"x64",
+						"ia32"
+					]
+				}
+			],
 			"requestedExecutionLevel": "requireAdministrator"
 		},
 		"publish": [
