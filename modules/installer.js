@@ -53,10 +53,6 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
     return;
   }
 
-  // get version out of registry
-  win.setProgressBar(0.1);
-  OldVersion = _getAddinVersion(registryItems);
-
   // get version out of CalcTool
   if (fs.existsSync(sAddinPath + "CalculationTool.inf")) {
     var fileContent = fs.readFileSync(sAddinPath + "CalculationTool.inf", { flag: 'r'});
@@ -67,6 +63,10 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
       OldVersion.setVersion(sVersion);
     }
   }
+
+  // get version out of registry
+  win.setProgressBar(0.1);
+  OldVersion = _getAddinVersion(registryItems);
 
   // disable for old Versions
   if (OldVersion.raw != "" && ((OldVersion.major == 1 && OldVersion.minor == 0) || OldVersion.major == 0)) { 
