@@ -3,7 +3,32 @@ const regedit = require('regedit');
 const path = require('path');
 const convert = require('xml-js');
 const { app, dialog, shell, BrowserWindow } = require('electron');
-const child_process = require('child_process');
+
+class _Version {
+  constructor(sVersion) {
+    this.raw = sVersion;
+    this.minor = -1;
+    this.major = -1;
+    this.patch = -1;
+    if (sVersion != "") {
+      this.formatVersion();
+    }
+  }
+
+  setVersion(sVersion) {
+    this.raw = sVersion;
+    this.formatVersion();
+  }
+
+  static formatVersion() {
+    var versionSub = new String(this.raw);
+    this.major = Number(versionSub.substring(1, versionSub.search('.')));
+    versionSub = versionSub.substring(versionSub.search('.') + 2, versionSub.length);
+    this.minor = Number(versionSub.substring(1, versionSub.search('.')));
+    versionSub = versionSub.substring(versionSub.search('.') + 2, versionSub.length);
+    this.patch = Number(versionSub.substring(1, versionSub.search('.')));
+  }
+}
 
 /**
  * Install the Excel-AddIn
@@ -14,8 +39,8 @@ const child_process = require('child_process');
 exports.installCalcTool = function(win, sResFolder, registryItems) {
   // required vars
   var sAddinPath = app.getPath('appData') + "\\Microsoft\\AddIns\\CalculationTool\\";
-  var OldVersion = {raw: "", major: -1, minor: -1, patch: -1};
-  var NewVersion = {raw: app.getVersion(), major: -1, minor: -1, patch: -1};
+  var OldVersion = new _Version("");
+  var NewVersion = new _Version(app.getVersion());
   var sLanguage = "DE";
 
   // for later use
@@ -24,17 +49,13 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
       type: "error",
       title: "Dateien nicht gefunden!",
       message: "Das Zielverzeichnis konnte nicht gefunden werden!"
-    });
+    });wwb
     return;
   }
 
   // get version out of registry
   win.setProgressBar(0.1);
-  registryItems.forEach(element => {
-    if (element.key.includes('CalculationTool\\Version')) {
-      OldVersion.raw = element.data.values[''].value;
-    }
-  });
+  OldVersion = _getAddinVersion(registryItems);
 
   // get version out of CalcTool
   if (fs.existsSync(sAddinPath + "CalculationTool.inf")) {
@@ -43,13 +64,9 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
     if (versionPos > 1) {
       versionPos = versionPos + "Version=".length;
       var sVersion = fileContent.toString().substr(versionPos, fileContent.toString().indexOf(".", versionPos + 5) - versionPos);
-      OldVersion.raw = sVersion;
+      OldVersion.setVersion(sVersion);
     }
   }
-
-  // format versions
-  OldVersion = formatVersion(OldVersion);
-  NewVersion = formatVersion(NewVersion);
 
   // disable for old Versions
   if (OldVersion.raw != "" && ((OldVersion.major == 1 && OldVersion.minor == 0) || OldVersion.major == 0)) { 
@@ -234,6 +251,23 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
 
 }
 
+/**
+ * Get Excel-Addin Version out of registry
+ * @param {Array} registryItems - Array of specific Registry-Items.
+ * @returns {_Version} resulting version
+ */
+exports.getAddinVersion = function(registryItems) {
+  _getAddinVersion(registryItems);
+}
+
+function _getAddinVersion(registryItems) {
+  registryItems.forEach(element => {
+    if (element.key.includes('CalculationTool\\Version')) {
+      return _Version(element.data.values[''].value);
+    }
+  });
+}
+
 // Further Process functions
 function copyFiles(sResFolder, sAddinPath, win) {
   win.setProgressBar(0.5);
@@ -292,16 +326,6 @@ function finalResult(sAddinPath, win) {
 }
 
 // other functions
-function formatVersion(versionObj) {
-    var versionSub = new String(versionObj.raw);
-    versionObj.major = Number(versionSub.substring(1, versionSub.search('.')));
-    versionSub = versionSub.substring(versionSub.search('.') + 2, versionSub.length);
-    versionObj.minor = Number(versionSub.substring(1, versionSub.search('.')));
-    versionSub = versionSub.substring(versionSub.search('.') + 2, versionSub.length);
-    versionObj.patch = Number(versionSub.substring(1, versionSub.search('.')));
-    return versionObj;
-}
-
 function copySettings(NewSettings, OldSettings) {
     for (x in NewSettings.elements) {
         for (k in OldSettings.elements) { 

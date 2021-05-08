@@ -6,11 +6,15 @@
 			"section": "Features"
 		},
 		{
+			"type": "chng",
+			"section": "Changes"
+		},
+		{
 			"type": "fix",
 			"section": "Bug Fixes"
 		},
 		{
-			"tpye": "rm",
+			"type": "rm",
 			"section": "Removed"
 		},
 		{
