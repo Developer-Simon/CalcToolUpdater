@@ -60,7 +60,7 @@ regedit.list(['HKCU\\SOFTWARE\\CalculationTool\\Language',
     // get Excel version
     else if (element.key.includes('Microsoft\\Office\\16.0\\Excel')) {
       try {
-        if (element.key.data.values['ExcelName']) {
+        if (element.data.values['ExcelName']) {
           bExcelFound = true;
         }
       } catch (error) {
