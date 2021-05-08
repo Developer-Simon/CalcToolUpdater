@@ -8,7 +8,7 @@ const fs = require('fs');
 const convert = require('xml-js');
 const { _Version, installCalcTool } = require('./modules/installer');
 
-const debug = true;
+const debug = false;
 
 
 //-------------------------------------------------------------------
