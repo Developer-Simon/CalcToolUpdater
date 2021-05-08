@@ -25,7 +25,11 @@
         }
       </style>
       <h4>Excel-AddIn Version</h4>
-      <div id="addin-version" class="alert alert-primary">Keine Version installiert</div>
+      <div id="addin-version-container" class="alert alert-primary">
+        <span id="addin-version">Keine Version installiert</span>
+        <span> </span>
+        <div id="excel-installation-warning"></div>
+      </div>
       <h4 id="available-version">Verfügbare Version </h4>
       <div class="alert alert-primary">
         <span id="version_label">VX.Y.Z</span>
@@ -80,6 +84,15 @@
       message.innerHTML = text;
     })
 
+    // create excel installation warning
+    ipcRenderer.on('excel-installation-status', function(event, isInstalled) {
+      var container = document.getElementById('excel-installation-warning');
+      if (!isInstalled) {
+        container.className = "badge bg-warning text-dark";
+        container.innerHTML = "Keine Excel-Installation gefunden"
+      }
+    })
+
     // Create update message and button 
     ipcRenderer.on('add-update-button', function(event, text) {
       var container = document.getElementById('install-button-line');
@@ -110,7 +123,18 @@
     ipcRenderer.on('excel-addin-version', function(event, text) {
       var addinVersion = document.getElementById('addin-version');
       var updaterVersion = document.getElementById('version_label');
-      addinVersion.innerHTML = text;    
+      addinVersion.innerText = text;    
+    })
+
+    // Event if Excel-Addin version is older than updater
+    ipcRenderer.on('excel-addin-version-old', function(event, isOld) {
+      var addinVersion = document.getElementById('addin-version-container');
+      if (isOld) {
+        addinVersion.className = "alert alert-warning"; 
+      } 
+      else {
+        addinVersion.className = "alert alert-success"; 
+      }  
     })
 
     // On Debug, create debug button

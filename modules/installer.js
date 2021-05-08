@@ -3,7 +3,86 @@ const regedit = require('regedit');
 const path = require('path');
 const convert = require('xml-js');
 const { app, dialog, shell, BrowserWindow } = require('electron');
-const child_process = require('child_process');
+const md = require('markdown-it')();
+
+class _Version {
+  constructor(sVersion) {
+    this.raw = sVersion;
+    this.minor = -1;
+    this.major = -1;
+    this.patch = -1;
+    if (sVersion != "") {
+      this._formatVersion();
+    }
+  }
+
+  /**
+   * set version by string
+   * @param {string} sVersion - Version string formatted like 'X.X.X'
+   */
+  setVersion(sVersion) {
+    this.raw = sVersion;
+    this._formatVersion();
+  }
+
+  /**
+   * check if an other version is newer to this
+   * @param {_Version} otherVersion - other version to compare
+   * @returns {boolean} false - if 'otherVersion' is older or equal
+   */
+  isOlderThan(otherVersion) {
+    if (this.equals(otherVersion)) {
+      return false;
+    }
+    else if (this.major < otherVersion.major) {
+      return true;
+    }
+    else if (this.major == otherVersion.major) {
+      if (this.minor < otherVersion.minor) {
+        return true;
+      }
+      else if (this.minor == otherVersion.minor) {
+        if (this.patch < otherVersion.patch) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  /**
+   * check if an other version is equal to this
+   * @param {_Version} otherVersion - other version to compare
+   * @returns {boolean} false - if 'otherVersion' is not equal
+   */
+  equals(otherVersion) {
+    if (this.major == otherVersion.major &&
+      this.minor == otherVersion.minor &&
+      this.patch == otherVersion.patch) {
+      return true;
+    }
+    return false;
+  }
+
+  _formatVersion() {
+    var versionSub = new String(this.raw);
+    this.major = Number(versionSub.substring(1, versionSub.search('.')));
+    versionSub = versionSub.substring(versionSub.search('.') + 2, versionSub.length);
+    this.minor = Number(versionSub.substring(1, versionSub.search('.')));
+    versionSub = versionSub.substring(versionSub.search('.') + 2, versionSub.length);
+    this.patch = Number(versionSub.substring(1, versionSub.search('.')));
+  }
+
+  _getVersionFromRegistry(registryItems) {
+    registryItems.forEach(element => {
+      if (element.key.includes('CalculationTool\\Version')) {
+        this.raw = element.data.values[''].value;
+        this._formatVersion();
+        return;
+      }
+    });
+  }
+}
+exports._Version = _Version;
 
 /**
  * Install the Excel-AddIn
@@ -11,11 +90,11 @@ const child_process = require('child_process');
  * @param {string} sResFolder - Resource-folder, containing the files to install.
  * @param {Array} registryItems - Array of specific Registry-Items.
  */
-exports.installCalcTool = function(win, sResFolder, registryItems) {
+function installCalcTool(win, sResFolder, registryItems) {
   // required vars
   var sAddinPath = app.getPath('appData') + "\\Microsoft\\AddIns\\CalculationTool\\";
-  var OldVersion = {raw: "", major: -1, minor: -1, patch: -1};
-  var NewVersion = {raw: app.getVersion(), major: -1, minor: -1, patch: -1};
+  var OldVersion = new _Version("");
+  var NewVersion = new _Version(app.getVersion());
   var sLanguage = "DE";
 
   // for later use
@@ -28,14 +107,6 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
     return;
   }
 
-  // get version out of registry
-  win.setProgressBar(0.1);
-  registryItems.forEach(element => {
-    if (element.key.includes('CalculationTool\\Version')) {
-      OldVersion.raw = element.data.values[''].value;
-    }
-  });
-
   // get version out of CalcTool
   if (fs.existsSync(sAddinPath + "CalculationTool.inf")) {
     var fileContent = fs.readFileSync(sAddinPath + "CalculationTool.inf", { flag: 'r'});
@@ -43,13 +114,13 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
     if (versionPos > 1) {
       versionPos = versionPos + "Version=".length;
       var sVersion = fileContent.toString().substr(versionPos, fileContent.toString().indexOf(".", versionPos + 5) - versionPos);
-      OldVersion.raw = sVersion;
+      OldVersion.setVersion(sVersion);
     }
   }
 
-  // format versions
-  OldVersion = formatVersion(OldVersion);
-  NewVersion = formatVersion(NewVersion);
+  // get version out of registry
+  win.setProgressBar(0.1);
+  OldVersion._getVersionFromRegistry(registryItems);
 
   // disable for old Versions
   if (OldVersion.raw != "" && ((OldVersion.major == 1 && OldVersion.minor == 0) || OldVersion.major == 0)) { 
@@ -233,6 +304,7 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
   setTimeout(finalResult, 4000, sAddinPath, win)
 
 }
+exports.installCalcTool = installCalcTool;
 
 // Further Process functions
 function copyFiles(sResFolder, sAddinPath, win) {
@@ -272,11 +344,13 @@ function moveDataBases(OldVersion, sAddinPath, win) {
 
 function insertSettings(sAddinPath, OldConfig, win) {
   win.setProgressBar(0.8);
-  var sNewConfig = fs.readFileSync(sAddinPath + "CalculationTool.xml", { flag: 'r'});
-  var NewConfig = convert.xml2js(sNewConfig, {compact: false});
-  copySettings(NewConfig, OldConfig);
-  sNewConfig = convert.js2xml(NewConfig, {compact: false})
-  fs.writeFileSync(sAddinPath + "CalculationTool.xml", sNewConfig);
+  if (fs.existsSync(sAddinPath + "CalculationTool.xml")) {
+    var sNewConfig = fs.readFileSync(sAddinPath + "CalculationTool.xml", { flag: 'r'});
+    var NewConfig = convert.xml2js(sNewConfig, {compact: false});
+    copySettings(NewConfig, OldConfig);
+    sNewConfig = convert.js2xml(NewConfig, {compact: false})
+    fs.writeFileSync(sAddinPath + "CalculationTool.xml", sNewConfig);
+  }
 }
 
 function finalResult(sAddinPath, win) {
@@ -287,21 +361,19 @@ function finalResult(sAddinPath, win) {
     defaultId: 1,
     title: "Installation erfolgreich!",
     message: "Das Calculation-Tool wurde erfolgreich installiert. Wollen Sie jetzt die Änderungen einsehen?"});
-  if (sResult == 1) shell.openItem(sAddinPath + "VersionLog_DE.txt");
+  if (sResult == 1) {
+    var sChangelog = fs.readFileSync(sAddinPath + "VersionLog_DE.txt", { flag: 'r'});
+    var sHTML = md.render(sChangelog.toString());
+    let ChangelogWindow = new BrowserWindow({ width: 800, height: 400 });
+    fs.writeFileSync(sAddinPath + "VersionLog_DE.html", sHTML);
+    ChangelogWindow.loadFile(sAddinPath + "VersionLog_DE.html");
+    ChangelogWindow.on('close', () => { win = null });
+    ChangelogWindow.show();
+  }
   win.setProgressBar(0);
 }
 
 // other functions
-function formatVersion(versionObj) {
-    var versionSub = new String(versionObj.raw);
-    versionObj.major = Number(versionSub.substring(1, versionSub.search('.')));
-    versionSub = versionSub.substring(versionSub.search('.') + 2, versionSub.length);
-    versionObj.minor = Number(versionSub.substring(1, versionSub.search('.')));
-    versionSub = versionSub.substring(versionSub.search('.') + 2, versionSub.length);
-    versionObj.patch = Number(versionSub.substring(1, versionSub.search('.')));
-    return versionObj;
-}
-
 function copySettings(NewSettings, OldSettings) {
     for (x in NewSettings.elements) {
         for (k in OldSettings.elements) { 

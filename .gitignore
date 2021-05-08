@@ -6,3 +6,4 @@ CalcToolClient.exe.lnk
 res/
 CALC_TOOL_UPDATER.code-workspace
 dev-app-update.yml
+.vscode/

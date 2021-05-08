@@ -6,8 +6,9 @@ const {autoUpdater} = require("electron-updater");
 const regedit = require('regedit');
 const fs = require('fs');
 const convert = require('xml-js');
-const { installCalcTool } = require('./modules/installer');
-const debug = false;
+const { _Version, installCalcTool } = require('./modules/installer');
+
+const debug = true;
 
 
 //-------------------------------------------------------------------
@@ -43,18 +44,38 @@ var g_sResFolder = app.getAppPath();
 var g_registryItems = Array(0);
 regedit.setExternalVBSLocation(g_sResFolder + "winreg-vbs\\");
 regedit.list(['HKCU\\SOFTWARE\\CalculationTool\\Language', 
-              'HKCU\\SOFTWARE\\CalculationTool\\Version'])
+              'HKCU\\SOFTWARE\\CalculationTool\\Version',
+              'HKCU\\SOFTWARE\\Microsoft\\Office\\16.0\\Excel'])
 .on('data', function(entry) {
   g_registryItems.push(entry);
 })
 .on('finish', function() {
-  //dialog.showMessageBox(win, {message: "All Registry Keys loaded!"});
+  var bExcelFound = false;
+  var AddInVersion = new _Version("");
+  var UpdaterVersion = new _Version(app.getVersion());
+
+  AddInVersion._getVersionFromRegistry(g_registryItems);
+  if (AddInVersion.raw != "") {
+    setTimeout(sendMessage, 1000, 'excel-addin-version' , "v" + AddInVersion.raw);
+  }
+  if (AddInVersion.isOlderThan(UpdaterVersion)) {
+    setTimeout(sendMessage, 1000, 'excel-addin-version-old', true);
+  }
 
   g_registryItems.forEach(element => {
-    if (element.key.includes('CalculationTool\\Version')) {
-      setTimeout(setAddinVersion, 1000, "v" + element.data.values[''].value);
+    // get Excel version
+    if (element.key.includes('Microsoft\\Office\\16.0\\Excel')) {
+      try {
+        if (element.data.values['ExcelName']) {
+          bExcelFound = true;
+        }
+      } catch (error) {
+        bExcelFound = false
+      }
     }
   });
+
+  setTimeout(sendMessage, 1000, 'excel-installation-status', bExcelFound);
 })
 .on('error', function(err) {
   ;
@@ -91,7 +112,7 @@ else if (process.platform == 'win32') {
     submenu: [
       {
         label: 'About ' + name,
-        role: 'about'
+        click() { dialog.showMessageBox(win, { message: 'You clicked about :)' }) }
       },
       {
         label: 'Quit',
@@ -118,8 +139,9 @@ function createButtonAtWindow(text) {
 function sendUpdateStatus(text) {
   win.webContents.send('update-status', text);
 }
-function setAddinVersion(text) {
-  win.webContents.send('excel-addin-version', text);
+function sendMessage(event, arg) {
+  log.info("ipcRenderer event: " + event + " - " + toString(arg));
+  win.webContents.send(event, arg);
 }
 
 function createDefaultWindow() {
