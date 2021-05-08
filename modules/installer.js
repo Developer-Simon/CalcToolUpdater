@@ -36,15 +36,17 @@ class _Version {
     else if (this.major < otherVersion.major) {
       return true;
     }
-    else if (this.minor < otherVersion.minor) {
-      return true;
+    else if (this.major == otherVersion.major) {
+      if (this.minor < otherVersion.minor) {
+        return true;
+      }
+      else if (this.minor == otherVersion.minor) {
+        if (this.patch < otherVersion.patch) {
+          return true;
+        }
+      }
     }
-    else if (this.patch < otherVersion.patch) {
-      return true;
-    }
-    else {
-      return false;
-    }
+    return false;
   }
   /**
    * check if an other version is equal to this

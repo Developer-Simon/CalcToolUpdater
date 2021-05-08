@@ -58,7 +58,6 @@ regedit.list(['HKCU\\SOFTWARE\\CalculationTool\\Language',
   if (AddInVersion.raw != "") {
     setTimeout(sendMessage, 1000, 'excel-addin-version' , "v" + AddInVersion.raw);
   }
-
   if (AddInVersion.isOlderThan(UpdaterVersion)) {
     setTimeout(sendMessage, 1000, 'excel-addin-version-old', true);
   }
