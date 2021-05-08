@@ -11,16 +11,16 @@ class _Version {
     this.major = -1;
     this.patch = -1;
     if (sVersion != "") {
-      this.formatVersion();
+      this._formatVersion();
     }
   }
 
   setVersion(sVersion) {
     this.raw = sVersion;
-    this.formatVersion();
+    this._formatVersion();
   }
 
-  static formatVersion() {
+  _formatVersion() {
     var versionSub = new String(this.raw);
     this.major = Number(versionSub.substring(1, versionSub.search('.')));
     versionSub = versionSub.substring(versionSub.search('.') + 2, versionSub.length);
@@ -28,7 +28,18 @@ class _Version {
     versionSub = versionSub.substring(versionSub.search('.') + 2, versionSub.length);
     this.patch = Number(versionSub.substring(1, versionSub.search('.')));
   }
+
+  _getVersionFromRegistry(registryItems) {
+    registryItems.forEach(element => {
+      if (element.key.includes('CalculationTool\\Version')) {
+        this.raw = element.data.values[''].value;
+        this._formatVersion();
+        return;
+      }
+    });
+  }
 }
+exports._Version = _Version;
 
 /**
  * Install the Excel-AddIn
@@ -36,7 +47,7 @@ class _Version {
  * @param {string} sResFolder - Resource-folder, containing the files to install.
  * @param {Array} registryItems - Array of specific Registry-Items.
  */
-exports.installCalcTool = function(win, sResFolder, registryItems) {
+function installCalcTool(win, sResFolder, registryItems) {
   // required vars
   var sAddinPath = app.getPath('appData') + "\\Microsoft\\AddIns\\CalculationTool\\";
   var OldVersion = new _Version("");
@@ -49,7 +60,7 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
       type: "error",
       title: "Dateien nicht gefunden!",
       message: "Das Zielverzeichnis konnte nicht gefunden werden!"
-    });wwb
+    });
     return;
   }
 
@@ -66,7 +77,7 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
 
   // get version out of registry
   win.setProgressBar(0.1);
-  OldVersion = _getAddinVersion(registryItems);
+  OldVersion._getVersionFromRegistry(registryItems);
 
   // disable for old Versions
   if (OldVersion.raw != "" && ((OldVersion.major == 1 && OldVersion.minor == 0) || OldVersion.major == 0)) { 
@@ -250,23 +261,7 @@ exports.installCalcTool = function(win, sResFolder, registryItems) {
   setTimeout(finalResult, 4000, sAddinPath, win)
 
 }
-
-/**
- * Get Excel-Addin Version out of registry
- * @param {Array} registryItems - Array of specific Registry-Items.
- * @returns {_Version} resulting version
- */
-exports.getAddinVersion = function(registryItems) {
-  _getAddinVersion(registryItems);
-}
-
-function _getAddinVersion(registryItems) {
-  registryItems.forEach(element => {
-    if (element.key.includes('CalculationTool\\Version')) {
-      return _Version(element.data.values[''].value);
-    }
-  });
-}
+exports.installCalcTool = installCalcTool;
 
 // Further Process functions
 function copyFiles(sResFolder, sAddinPath, win) {

@@ -6,7 +6,8 @@ const {autoUpdater} = require("electron-updater");
 const regedit = require('regedit');
 const fs = require('fs');
 const convert = require('xml-js');
-const { installCalcTool } = require('./modules/installer');
+const {_Version, installCalcTool} = require('./modules/installer');
+
 const debug = true;
 
 
@@ -50,15 +51,17 @@ regedit.list(['HKCU\\SOFTWARE\\CalculationTool\\Language',
 })
 .on('finish', function() {
   //dialog.showMessageBox(win, {message: "All Registry Keys loaded!"});
-  var bExcelFound = false
+  var bExcelFound = false;
+  var ReadVersion = new _Version("");
+
+  ReadVersion._getVersionFromRegistry(g_registryItems);
+  if (ReadVersion.raw != "") {
+    setTimeout(sendMessage, 1000, 'excel-addin-version' , "v" + ReadVersion.raw);
+  }
 
   g_registryItems.forEach(element => {
-    // get AddIn version
-    if (element.key.includes('CalculationTool\\Version')) {
-      setTimeout(setAddinVersion, 1000, "v" + element.data.values[''].value);
-    }
     // get Excel version
-    else if (element.key.includes('Microsoft\\Office\\16.0\\Excel')) {
+    if (element.key.includes('Microsoft\\Office\\16.0\\Excel')) {
       try {
         if (element.data.values['ExcelName']) {
           bExcelFound = true;
@@ -106,7 +109,7 @@ else if (process.platform == 'win32') {
     submenu: [
       {
         label: 'About ' + name,
-        role: 'about'
+        click() { dialog.showMessageBox(win, { message: 'You clicked about :)' }) }
       },
       {
         label: 'Quit',
@@ -132,9 +135,6 @@ function createButtonAtWindow(text) {
 }
 function sendUpdateStatus(text) {
   win.webContents.send('update-status', text);
-}
-function setAddinVersion(text) {
-  win.webContents.send('excel-addin-version', text);
 }
 function sendMessage(event, arg) {
   log.info("ipcRenderer event: " + event + " - " + toString(arg));
@@ -193,9 +193,6 @@ app.on('ready', function() {
     setTimeout(installCalcTool, 2000, win, g_sResFolder, g_registryItems);
     store.set('download-done', 0);
   }
-
-  // lite delayed events
- 
 });
 
 app.on('window-all-closed', () => {
