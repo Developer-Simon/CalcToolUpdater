@@ -343,11 +343,13 @@ function moveDataBases(OldVersion, sAddinPath, win) {
 
 function insertSettings(sAddinPath, OldConfig, win) {
   win.setProgressBar(0.8);
-  var sNewConfig = fs.readFileSync(sAddinPath + "CalculationTool.xml", { flag: 'r'});
-  var NewConfig = convert.xml2js(sNewConfig, {compact: false});
-  copySettings(NewConfig, OldConfig);
-  sNewConfig = convert.js2xml(NewConfig, {compact: false})
-  fs.writeFileSync(sAddinPath + "CalculationTool.xml", sNewConfig);
+  if (fs.existsSync(sAddinPath + "CalculationTool.xml")) {
+    var sNewConfig = fs.readFileSync(sAddinPath + "CalculationTool.xml", { flag: 'r'});
+    var NewConfig = convert.xml2js(sNewConfig, {compact: false});
+    copySettings(NewConfig, OldConfig);
+    sNewConfig = convert.js2xml(NewConfig, {compact: false})
+    fs.writeFileSync(sAddinPath + "CalculationTool.xml", sNewConfig);
+  }
 }
 
 function finalResult(sAddinPath, win) {
