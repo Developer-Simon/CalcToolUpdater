@@ -1,6 +1,6 @@
 {
 	"name": "CalcToolClient",
-	"version": "1.2.3",
+	"version": "1.2.4",
 	"main": "main.js",
 	"description": "Program to install and update MS-Excel CalculationTool",
 	"author": "Developer-Simon",
