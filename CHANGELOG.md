@@ -1,4 +1,6 @@
 CalcToolClient Changelog
+### [1.2.4](https://github.com/Developer-Simon/CalcToolUpdater/compare/v1.2.3...v1.2.4) (2022-12-03)
+
 ### [1.2.3](///compare/v1.2.2...v1.2.3) (2021-05-08)
 
 
